@@ -1,0 +1,28 @@
+# create .gitignore
+cat > .gitignore <<'EOF'
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log
+pnpm-lock.yaml
+.env
+.env.local
+.env.*.local
+.DS_Store
+.next/
+dist/
+build/
+.vscode/
+.idea/
+
+# logs
+logs
+*.log
+pids
+*.pid
+*.seedlog
+
+# OS
+Thumbs.db
+ehthumbs.db
+EOF
