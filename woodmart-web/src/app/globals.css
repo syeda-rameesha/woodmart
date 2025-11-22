@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Put any custom CSS below. Do NOT place utilities or @apply at the top level */
+html, body { height: 100%; }

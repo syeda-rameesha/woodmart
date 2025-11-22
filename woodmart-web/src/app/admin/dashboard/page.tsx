@@ -1,0 +1,46 @@
+// src/app/admin/dashboard/page.tsx
+"use client";
+
+import { useAdmin } from "@/store/useAdmin";
+import { useRouter } from "next/navigation";
+import AdminGuard from "@/components/admin/AdminGuard";
+import OrdersTable from "@/components/admin/OrdersTable"; // 👈 add this import
+
+export default function AdminDashboardPage() {
+  const token = useAdmin((s) => s.token);
+  const doLogout = useAdmin((s) => s.logout);
+  const router = useRouter();
+
+  return (
+    <AdminGuard>
+      <div className="container mx-auto px-4 py-10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500">
+              token: {token ?? "(none)"}
+            </span>
+
+            <button
+              type="button"
+              className="border rounded-md px-3 py-1 text-sm"
+              onClick={() => {
+                doLogout();
+                router.replace("/admin/login");
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        {/* ✅ Add this below your page header */}
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
+          <OrdersTable /> {/* 👈 this will display the orders list */}
+        </div>
+      </div>
+    </AdminGuard>
+  );
+}
