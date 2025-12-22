@@ -1,200 +1,337 @@
 // woodmart-web/src/app/admin/add-product/page.tsx
 "use client";
 
-import { FormEvent, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminGuard from "@/components/admin/AdminGuard";
-import { useAdmin } from "@/store/useAdmin";
-import { adminApi } from "@/lib/adminApi";
+import toast from "react-hot-toast";
+import adminUpload from "@/lib/adminUpload"; // default export
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
-type ProductInput = {
-  title: string;
-  slug: string;
-  brand?: string;
-  price?: number;
-  salePrice?: number;
-  category?: string;
-  image?: string;
-  images?: string[];
-  description?: string;
+type Category = {
+  _id?: string;
+  name: string;
+  slug?: string;
 };
 
 export default function AddProductPage() {
   const router = useRouter();
-  const token = useAdmin((s) => s.token);
 
-  const [form, setForm] = useState<ProductInput>({
-    title: "",
-    slug: "",
-    brand: "",
-    price: 0,
-    salePrice: undefined,
-    category: "",
-    image: "",
-    images: [],
-    description: "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [price, setPrice] = useState<number | "">("");
+  const [brand, setBrand] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  function updateField<K extends keyof ProductInput>(key: K, value: ProductInput[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE.replace(/\/api$/, "")}/api/categories`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const list: Category[] = data?.items || data?.categories || data || [];
+        if (mounted && Array.isArray(list)) {
+          setCategories(list);
+          if (list.length && !category) {
+            setCategory(list[0].name ?? list[0]._id ?? "");
+          }
+        }
+      } catch (err) {
+        // swallow - not critical
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onChooseFile() {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "image/*";
+    inp.onchange = () => {
+      if (!inp.files || !inp.files[0]) return;
+      const f = inp.files[0];
+      setImageFile(f);
+      setImagePreview(URL.createObjectURL(f));
+    };
+    inp.click();
   }
 
-  async function handleSubmit(e: FormEvent) {
+  function onDrop(e: React.DragEvent) {
     e.preventDefault();
-    setError("");
-    setSaving(true);
-
-    try {
-      const body: ProductInput = {
-        ...form,
-        price: Number(form.price) || 0,
-        salePrice:
-          form.salePrice === undefined || form.salePrice === null
-            ? undefined
-            : Number(form.salePrice),
-      };
-
-      await adminApi("/admin/products", token, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-
-      router.push("/admin/dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Failed to create product");
-    } finally {
-      setSaving(false);
+    if (!e.dataTransfer) return;
+    const f = e.dataTransfer.files?.[0] ?? null;
+    if (f) {
+      setImageFile(f);
+      setImagePreview(URL.createObjectURL(f));
     }
   }
 
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem("admin_token");
+      if (!token) {
+        throw new Error("Not logged in as admin. Please login first.");
+      }
+
+      // 1) upload image (if present)
+      let imageUrl: string | undefined = undefined;
+      if (imageFile) {
+        const toastId = toast.loading("Uploading image...");
+        try {
+          const res = await adminUpload(imageFile, token);
+          toast.dismiss(toastId);
+
+          // normalize/resilient extraction of url
+          imageUrl =
+            (res && (res.url || res.body?.url || res.body?.secure_url || res.body?.data?.url)) ||
+            (res && res.body && typeof res.body === "string" ? undefined : res.body?.filename && `${API_BASE.replace(/\/api$/, "")}/uploads/${res.body.filename}`) ||
+            undefined;
+
+          // If helper returns filename only
+          if (!imageUrl && res?.filename) {
+            imageUrl = `${API_BASE.replace(/\/api$/, "")}/uploads/${res.filename}`;
+          }
+
+          if (!imageUrl) {
+            // graceful fallback - do not crash: use placeholder if backend didn't return URL
+            imageUrl = process.env.NEXT_PUBLIC_DEFAULT_PRODUCT_IMAGE || "/uploads/placeholder.png";
+          }
+
+          toast.success("Image uploaded");
+        } catch (err: any) {
+          toast.dismiss();
+          console.error("adminUpload error:", err);
+          throw new Error(err?.message || "Image upload failed");
+        }
+      }
+
+      // 2) prepare body for product create
+      const body: any = {
+        title: title.trim(),
+        slug: slug?.trim() || undefined,
+        price: Number(price) || 0,
+        brand: brand?.trim() || undefined,
+        category: category?.trim() || undefined,
+        description: description?.trim() || undefined,
+      };
+
+      if (imageUrl) {
+        body.image = imageUrl;
+        body.images = [imageUrl];
+      }
+
+      // 3) call admin create product endpoint
+      const token2 = localStorage.getItem("admin_token");
+      const res = await fetch(`${API_BASE.replace(/\/api$/, "")}/api/admin/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token2 ? `Bearer ${token2}` : "",
+        },
+        body: JSON.stringify(body),
+      });
+
+      // parse response safely
+      let parsed: any = null;
+      try {
+        parsed = await res.json();
+      } catch {
+        parsed = null;
+      }
+
+      if (!res.ok) {
+        console.error("CREATE STATUS:", res.status, "RESPONSE:", parsed);
+        // prefer server validation message if present
+        const msg =
+          (parsed && (parsed.message || parsed.error || parsed?.details?.message)) ||
+          `Failed to create product (${res.status})`;
+        throw new Error(msg);
+      }
+
+      toast.success("Product created");
+      // clear and navigate to admin products
+      router.push("/admin/products");
+    } catch (err: any) {
+      console.error("Create product error:", err);
+      toast.error(err?.message || "Create product failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function clearForm() {
+    setTitle("");
+    setSlug("");
+    setPrice("");
+    setBrand("");
+    setCategory(categories?.[0]?.name ?? "");
+    setDescription("");
+    setImagePreview(null);
+    setImageFile(null);
+  }
+
   return (
-    <AdminGuard>
-      <div className="container mx-auto px-4 py-10 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6">Add Product</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 md:col-span-8">
+          <h1 className="text-2xl font-semibold mb-4">Add Product</h1>
 
-        {error && (
-          <div className="mb-4 rounded bg-red-50 text-red-600 px-4 py-2 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium">Title</label>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              value={form.title}
-              onChange={(e) => updateField("title", e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Slug</label>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              value={form.slug}
-              onChange={(e) => updateField("slug", e.target.value)}
-              placeholder="my-awesome-product"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Brand</label>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              value={form.brand}
-              onChange={(e) => updateField("brand", e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium">Price</label>
+              <label className="block text-sm font-medium">Title</label>
               <input
-                type="number"
-                className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                value={form.price}
-                onChange={(e) => updateField("price", Number(e.target.value))}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Product title"
                 required
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium">Slug (optional)</label>
+                <input
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="product-slug"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Price</label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="0"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium">Brand</label>
+                <input
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Brand"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                >
+                  {categories && categories.length > 0 ? (
+                    categories.map((c, i) => (
+                      <option key={c._id ?? `${c.name}-${i}`} value={c.name ?? c._id}>
+                        {c.name ?? c.slug ?? c._id}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Uncategorized">Uncategorized</option>
+                      <option value="Default">Default</option>
+                    </>
+                  )}
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium">Sale Price (optional)</label>
-              <input
-                type="number"
-                className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                value={form.salePrice ?? ""}
-                onChange={(e) =>
-                  updateField(
-                    "salePrice",
-                    e.target.value === "" ? undefined : Number(e.target.value)
-                  )
-                }
+              <label className="block text-sm font-medium">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full border rounded px-3 py-2 h-32"
+                placeholder="Product description"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium">Category</label>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              value={form.category}
-              onChange={(e) => updateField("category", e.target.value)}
-              placeholder="furniture / cooking / fashion / lighting / toys / accessories / clocks"
-            />
-          </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-black text-white px-4 py-2 rounded"
+              >
+                {loading ? "Creating…" : "Create product"}
+              </button>
 
-          <div>
-            <label className="block text-sm font-medium">Main Image URL</label>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              value={form.image}
-              onChange={(e) => updateField("image", e.target.value)}
-            />
-          </div>
+              <button
+                type="button"
+                onClick={clearForm}
+                className="border px-3 py-2 rounded"
+              >
+                Clear
+              </button>
+            </div>
+          </form>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium">
-              Extra Images (comma separated URLs)
-            </label>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              value={form.images?.join(", ") || ""}
-              onChange={(e) =>
-                updateField(
-                  "images",
-                  e.target.value
-                    .split(",")
-                    .map((x) => x.trim())
-                    .filter(Boolean)
-                )
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Description</label>
-            <textarea
-              className="mt-1 w-full border rounded px-3 py-2 text-sm"
-              rows={4}
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="mt-4 w-full bg-black text-white rounded py-2 text-sm font-medium disabled:opacity-60"
+        <div className="col-span-12 md:col-span-4">
+          <div
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            className="border-dashed border-2 border-gray-200 rounded p-4 text-center"
+            style={{ minHeight: 200 }}
           >
-            {saving ? "Saving…" : "Create product"}
-          </button>
-        </form>
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="preview"
+                className="mx-auto max-h-48 object-contain"
+              />
+            ) : (
+              <div className="text-gray-400">Drop image or click below</div>
+            )}
+
+            <div className="mt-4 flex justify-center gap-3">
+              <button
+                onClick={onChooseFile}
+                type="button"
+                className="border px-3 py-2 rounded"
+              >
+                Choose file
+              </button>
+
+              <button
+                onClick={() => {
+                  setImagePreview(null);
+                  setImageFile(null);
+                }}
+                type="button"
+                className="border px-3 py-2 rounded"
+              >
+                Clear image
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </AdminGuard>
+    </div>
   );
 }

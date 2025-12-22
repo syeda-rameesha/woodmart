@@ -40,7 +40,7 @@ export default function Search() {
       }
       try {
         setLoading(true);
-        const base = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
+        const base = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5001/api";
         const r = await fetch(`${base}/products/search?q=${encodeURIComponent(q)}&limit=6`);
         const data = await r.json();
         setResults(data.items || []);

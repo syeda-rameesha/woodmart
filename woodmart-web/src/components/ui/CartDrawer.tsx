@@ -1,140 +1,101 @@
+// src/components/ui/CartDrawer.tsx
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
+import React from "react";
 import { useCart } from "@/store/useCart";
 
-type Props = { open: boolean; onClose: () => void };
-
-// tiny helper
-const money = (n: number) => `$${Number(n || 0).toFixed(2)}`;
+type Props = {
+  open: boolean;
+  onClose: () => void;
+};
 
 export default function CartDrawer({ open, onClose }: Props) {
-  const { cart, inc, dec, remove, clear } = useCart();
+  const { cart = [], inc, dec, remove, clear } = useCart();
   const subtotal = cart.reduce((s: number, i: any) => s + (i.price || 0) * (i.qty || 0), 0);
 
-  // close on ESC
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    if (open) document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  if (!open) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className={`fixed inset-0 bg-black/40 transition-opacity duration-200 ${
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        aria-hidden="true"
-      />
+    <div className="fixed inset-0 z-50">
+      {/* backdrop */}
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      {/* Panel */}
-      <aside
-        className={`fixed right-0 top-0 h-full w-[92%] sm:w-[420px] bg-white shadow-xl z-[60]
-        transition-transform duration-300 ease-out
-        ${open ? "translate-x-0" : "translate-x-full"}`}
-        role="dialog"
-        aria-label="Shopping cart"
-      >
-        <header className="flex items-center justify-between border-b px-5 py-4">
+      {/* drawer */}
+      <aside className="absolute right-0 top-0 w-full md:w-[420px] max-w-full bg-white shadow-xl flex flex-col
+                        h-[105vh] md:h-[100vh]">
+        {/* header */}
+        <header className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold">Your cart</h3>
-          <button onClick={onClose} className="text-sm underline">Close</button>
+          <button onClick={onClose} className="text-sm px-2 py-1">Close</button>
         </header>
 
-        {/* Empty state */}
-        {!cart.length ? (
-          <div className="p-6">
-            <p className="text-gray-600">Your cart is empty.</p>
-            <Link href="/shop" onClick={onClose} className="inline-block mt-3 underline">
-              Continue shopping →
-            </Link>
-          </div>
-        ) : (
-          <>
-            {/* Items */}
-            <div className="p-5 space-y-4 overflow-y-auto h-[calc(100%-190px)]">
-              {cart.map((i: any) => (
-                <div key={i.slug} className="flex gap-3">
-                  <img
-                    src={i.image}
-                    alt={i.title}
-                    className="w-20 h-20 rounded-md object-cover bg-gray-100"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/shop/${i.slug}`}
-                      className="font-medium hover:underline line-clamp-1"
-                      onClick={onClose}
-                    >
-                      {i.title}
-                    </Link>
+        {/* item list (scrollable) */}
+        <div className="p-4 overflow-auto flex-1">
+          {cart.length === 0 ? (
+            <div className="text-gray-500 py-8 text-center">Your cart is empty.</div>
+          ) : (
+            cart.map((i: any) => (
+              <div key={i.slug} className="flex items-center gap-3 mb-4">
+                <img
+                  src={i.image || "/placeholder.png"}
+                  alt={i.title}
+                  className="w-16 h-16 object-cover rounded-md bg-gray-100"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{i.title}</div>
+                  <div className="text-sm text-gray-500">${i.price}</div>
 
-                    <div className="text-gray-500 text-sm">{money(i.price)}</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button onClick={() => dec(i.slug)} className="px-2 py-1 border rounded">−</button>
+                    <div className="w-8 text-center">{i.qty}</div>
+                    <button onClick={() => inc(i.slug)} className="px-2 py-1 border rounded">+</button>
 
-                    <div className="mt-2 flex items-center gap-2">
-                      <button
-                        onClick={() => dec(i.slug)}
-                        className="h-7 px-2 border rounded"
-                        aria-label="Decrease"
-                      >
-                        –
-                      </button>
-                      <span className="w-8 text-center">{i.qty}</span>
-                      <button
-                        onClick={() => inc(i.slug)}
-                        className="h-7 px-2 border rounded"
-                        aria-label="Increase"
-                      >
-                        +
-                      </button>
-
-                      <button
-                        onClick={() => remove(i.slug)}
-                        className="ml-3 text-red-600 text-sm underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="font-semibold whitespace-nowrap">
-                    {money((i.qty || 0) * (i.price || 0))}
+                    <button onClick={() => remove(i.slug)} className="ml-3 text-red-600 text-sm">Remove</button>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Footer */}
-            <footer className="border-t p-5 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span className="font-semibold">{money(subtotal)}</span>
+                <div className="font-semibold ml-2">${((i.qty || 0) * (i.price || 0)).toFixed(2)}</div>
               </div>
-              <div className="text-xs text-gray-500">
-                Shipping & taxes calculated at checkout.
-              </div>
-              <div className="flex gap-3">
-                <Link
-                  href="/cart"
-                  onClick={onClose}
-                  className="flex-1 border rounded-md py-3 text-center"
-                >
-                  View cart
-                </Link>
-                <button className="flex-1 bg-black text-white rounded-md py-3">
-                  Checkout
-                </button>
-              </div>
-              <button onClick={clear} className="text-xs underline text-gray-600">
-                Clear cart
-              </button>
-            </footer>
-          </>
-        )}
+            ))
+          )}
+        </div>
+
+        {/* footer: fixed inside drawer */}
+        <div className="p-4 border-t">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-600">Subtotal</span>
+            <span className="font-semibold">${subtotal.toFixed(2)}</span>
+          </div>
+
+          <div className="flex gap-3">
+            {/* View cart button (bigger height) */}
+            <a
+              href="/cart"
+              onClick={onClose}
+              className="flex-1 text-center py-4 rounded-md border hover:bg-gray-50"
+            >
+              View cart
+            </a>
+
+            {/* Checkout button (bigger height & primary) */}
+            <a
+              href="/checkout"
+              onClick={onClose}
+              className="flex-1 text-center py-4 rounded-md bg-black text-white"
+            >
+              Checkout
+            </a>
+          </div>
+
+          <button
+            onClick={() => clear()}
+            className="mt-3 w-full text-sm text-gray-600 underline"
+            type="button"
+          >
+            Clear cart
+          </button>
+        </div>
       </aside>
-    </>
+    </div>
   );
 }

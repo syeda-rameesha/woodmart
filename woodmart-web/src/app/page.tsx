@@ -2,7 +2,7 @@
 import CategoriesMenu from "@/components/ui/CategoriesMenu";
 import ProductGrid from "@/components/ui/ProductGrid";
 import CategoryChips from "@/components/category/CategoryChips";
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import { ALL_CATS } from "@/lib/categories";
 
 import HeroSlider from "@/components/home/HeroSlider";

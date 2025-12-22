@@ -1,35 +1,58 @@
-// src/store/useAdmin.ts
+// woodmart-web/src/store/useAdmin.ts
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-type AdminState = {
+type AdminStore = {
   token: string | null;
-  isAuthed: () => boolean;
   setToken: (t: string | null) => void;
   logout: () => void;
+  isLogged: () => boolean;
+  // some parts of the app call isAuthed — provide it for compatibility
+  isAuthed: () => boolean;
 };
 
-export const useAdmin = create<AdminState>((set, get) => ({
-  token:
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("admin_token")
-      : null,
+const useAdmin = create<AdminStore>()(
+  persist(
+    (set, get) => ({
+      token:
+        typeof window !== "undefined"
+          ? localStorage.getItem("admin_token") || localStorage.getItem("token") || null
+          : null,
 
-  isAuthed: () => Boolean(get().token),
+      setToken: (t: string | null) => {
+        if (typeof window !== "undefined") {
+          if (t) {
+            localStorage.setItem("admin_token", t);
+            localStorage.setItem("token", t);
+          } else {
+            localStorage.removeItem("admin_token");
+            localStorage.removeItem("token");
+          }
+        }
+        set({ token: t });
+      },
 
-  setToken: (t) => {
-    if (typeof window !== "undefined") {
-      if (t) localStorage.setItem("admin_token", t);
-      else localStorage.removeItem("admin_token");
+      logout: () => {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("token");
+        }
+        set({ token: null });
+      },
+
+      isLogged: () => Boolean(get().token),
+
+      // backward-compatible alias used in some components
+      isAuthed: () => Boolean(get().token),
+    }),
+    {
+      name: "woodmart-admin",
+      partialize: (state) => ({ token: state.token }),
     }
-    set({ token: t });
-  },
+  )
+);
 
-  logout: () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("admin_token");
-    }
-    set({ token: null });
-  },
-}));
+export { useAdmin };
+export default useAdmin;

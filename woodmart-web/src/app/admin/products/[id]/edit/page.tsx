@@ -2,10 +2,11 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import AdminGuard from "@/components/admin/AdminGuard";
 import { useAdmin } from "@/store/useAdmin";
-import { adminApi } from "@/lib/adminApi";
+// NOTE: we will call the admin API directly using full URL (bypass wrapper)
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 type Product = {
   _id: string;
@@ -13,19 +14,15 @@ type Product = {
   slug: string;
   brand?: string;
   price?: number;
-  salePrice?: number;
+  salePrice?: number | undefined;
   category?: string;
   image?: string;
   images?: string[];
   description?: string;
 };
 
-type PageProps = {
-  params: { id: string };
-};
-
-export default function EditProductPage({ params }: PageProps) {
-  const { id } = params;
+export default function EditProductPage() {
+  const { id } = useParams() as { id?: string } || {};
   const router = useRouter();
   const token = useAdmin((s) => s.token);
 
@@ -43,18 +40,54 @@ export default function EditProductPage({ params }: PageProps) {
     (async () => {
       try {
         setLoading(true);
-        const data = await adminApi<Product>(`/products/${id}`, token, {
+        setError("");
+
+        if (!id) {
+          throw new Error("Missing product id in URL");
+        }
+
+        // Direct call to admin product endpoint (GET)
+        const res = await fetch(`${API_BASE}/admin/products/${id}`, {
           method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            // include token if available (optional for your api)
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          cache: "no-store",
         });
-        setForm(data);
+
+        const txt = await res.text();
+        let data: any;
+        try {
+          data = txt ? JSON.parse(txt) : null;
+        } catch {
+          data = txt;
+        }
+
+        if (!res.ok) {
+          const message =
+            data?.message || data?.error || `Failed to load product (${res.status})`;
+          throw new Error(message);
+        }
+
+        // admin route may return { product } or the product directly
+        const productPayload = data?.product ?? data;
+        if (!productPayload) {
+          throw new Error("Product not found");
+        }
+
+        setForm(productPayload as Product);
       } catch (err: any) {
+        console.error("Failed to load product:", err);
         setError(err?.message || "Failed to load product");
+        setForm(null);
       } finally {
         setLoading(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, token]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -64,20 +97,50 @@ export default function EditProductPage({ params }: PageProps) {
     setError("");
 
     try {
-      await adminApi(`/admin/products/${id}`, token, {
+      if (!id) throw new Error("Missing product id");
+
+      if (!token) {
+        throw new Error("No admin token - please login");
+      }
+
+      // prepare numeric fields
+      const payload = {
+        ...form,
+        price: Number(form.price) || 0,
+        salePrice:
+          form.salePrice === undefined || form.salePrice === null
+            ? undefined
+            : Number(form.salePrice),
+      };
+
+      // call admin update endpoint directly
+      const res = await fetch(`${API_BASE}/admin/products/${id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          ...form,
-          price: Number(form.price) || 0,
-          salePrice:
-            form.salePrice === undefined || form.salePrice === null
-              ? undefined
-              : Number(form.salePrice),
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
 
+      const txt = await res.text();
+      let data: any;
+      try {
+        data = txt ? JSON.parse(txt) : null;
+      } catch {
+        data = txt;
+      }
+
+      if (!res.ok) {
+        // show server-provided message if any
+        const message = data?.message || data?.error || `Failed to update product (${res.status})`;
+        throw new Error(message);
+      }
+
+      // success -> go back to products list
       router.push("/admin/products");
     } catch (err: any) {
+      console.error("Update product error:", err);
       setError(err?.message || "Failed to update product");
     } finally {
       setSaving(false);
@@ -116,7 +179,6 @@ export default function EditProductPage({ params }: PageProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* same fields as AddProductPage */}
           <div>
             <label className="block text-sm font-medium">Title</label>
             <input
@@ -125,6 +187,7 @@ export default function EditProductPage({ params }: PageProps) {
               onChange={(e) => update("title", e.target.value)}
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium">Slug</label>
             <input
@@ -133,6 +196,7 @@ export default function EditProductPage({ params }: PageProps) {
               onChange={(e) => update("slug", e.target.value)}
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium">Brand</label>
             <input
@@ -152,6 +216,7 @@ export default function EditProductPage({ params }: PageProps) {
                 onChange={(e) => update("price", Number(e.target.value))}
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium">Sale Price</label>
               <input

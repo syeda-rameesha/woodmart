@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import { notFound } from "next/navigation";
 import ProductGallery from "@/components/ui/ProductGallery";
 import AddToCart from "@/components/ui/AddToCart";

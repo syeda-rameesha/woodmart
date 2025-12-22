@@ -1,83 +1,104 @@
 "use client";
 
 import Link from "next/link";
-import WishlistButton from "@/components/ui/WishlistButton";
+import React, { useState } from "react";
+import { useCart } from "@/store/useCart";
 
-type Item = {
+type Props = {
   _id?: string;
   title?: string;
   slug?: string;
   brand?: string;
-  price?: number;
-  salePrice?: number;
-  rating?: number;
-  image?: string;
-  images?: string[];
+  price?: number | string;
+  salePrice?: number | string | null;
+  image?: string | null;
+  images?: string[] | null;
 };
 
-export default function ProductCard({ item }: { item: Partial<Item> }) {
-  // ✅ Safely pick the best image and price
+export default function ProductCard(props: Props) {
+  const {
+    _id: rawId,
+    title,
+    slug: rawSlug,
+    brand,
+    price,
+    salePrice = null,
+    image,
+    images,
+  } = props;
+
+  const { add } = useCart();
+  const [justAdded, setJustAdded] = useState(false);
+
   const img =
-    item?.images?.[0] ||
-    item?.image ||
+    (image && typeof image === "string" && image.length > 5 && image) ||
+    (Array.isArray(images) && images.length && images[0]) ||
     "/placeholder.png";
 
-  const displayPrice = item?.salePrice ?? item?.price ?? 0;
+  const displayTitle = title && title.trim().length ? title : "Untitled Product";
+  const finalPrice = salePrice != null && salePrice !== "" ? salePrice : price ?? 0;
+  const priceStr =
+    typeof finalPrice === "number"
+      ? `$${finalPrice}`
+      : finalPrice
+      ? `$${finalPrice}`
+      : "$0";
+
+  const href = rawSlug ? `/shop/${rawSlug}` : rawId ? `/shop/${rawId}` : "/shop";
+
+  const id = rawId ? String(rawId) : rawSlug ? String(rawSlug) : `tmp-${Math.random().toString(36).slice(2, 9)}`;
+  const slug = rawSlug ? String(rawSlug) : id;
+  const numericPrice = Number(finalPrice) || 0;
+
+  const productForCart = {
+    _id: id,
+    title: displayTitle,
+    slug,
+    price: numericPrice,
+    image: img,
+  };
+
+  function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      add(productForCart, 1);
+      setJustAdded(true);
+      // revert after 1.5s
+      setTimeout(() => setJustAdded(false), 1500);
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+    }
+  }
 
   return (
-    <div className="rounded-lg border p-3 bg-white hover:shadow-sm transition">
-      {/* Product Image */}
-      <div className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group">
-        <Link href={`/shop/${item?.slug ?? "#"}`}>
-          <img
-            src={img}
-            alt={item?.title ?? "Product"}
-            className="w-full h-full object-cover"
-          />
-        </Link>
-
-        {/* ❤️ Wishlist Button */}
-        <div className="absolute top-2 right-2">
-          <WishlistButton
-            item={{
-              _id: item?._id ?? "",
-              title: item?.title ?? "Untitled",
-              slug: item?.slug ?? "",
-              price: displayPrice,
-              image: img,
-            }}
-          />
+    <div className="block border rounded-md overflow-hidden hover:shadow transition bg-white">
+      <Link href={href} className="block">
+        <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img} alt={displayTitle} className="w-full h-full object-cover" />
         </div>
-      </div>
 
-      {/* 🛒 Add to Cart button (appears on hover) */}
-<button
-  className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black text-white text-sm px-4 py-2 rounded opacity-0 group-hover:opacity-100 transition duration-300"
-  onClick={(e) => {
-    e.preventDefault(); // stop link click
-    alert(`Added ${item?.title ?? "product"} to cart!`);
-  }}
->
-  Add to Cart
-</button>
-
-      {/* Product Text/Details */}
-      <Link href={`/shop/${item?.slug ?? "#"}`}>
-        {item?.brand && (
-          <div className="mt-3 text-xs text-gray-500">{item.brand}</div>
-        )}
-        <div className="font-medium leading-tight line-clamp-2">
-          {item?.title ?? "Untitled Product"}
-        </div>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="font-semibold">${displayPrice}</span>
-          {item?.salePrice && (
-            <span className="text-xs line-through text-gray-400">
-              ${item?.price}
-            </span>
-          )}
+        <div className="p-3">
+          <div className="text-xs text-gray-500">{brand ?? ""}</div>
+          <div className="font-medium truncate mt-1">{displayTitle}</div>
+          <div className="text-sm mt-1">
+            <span className="font-semibold">{priceStr}</span>
+          </div>
         </div>
       </Link>
+
+      <button
+        onClick={handleAddToCart}
+        disabled={justAdded}
+        className={`w-full py-2 text-sm font-medium transition ${
+          justAdded ? "bg-green-600 text-white" : "bg-black text-white hover:bg-black/80"
+        }`}
+        aria-label={`Add ${displayTitle} to cart`}
+      >
+        {justAdded ? "Added ✓" : "Add To Cart"}
+      </button>
     </div>
   );
 }

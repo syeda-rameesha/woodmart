@@ -1,3 +1,4 @@
+// src/app/store/useCart.ts
 "use client";
 
 import { create } from "zustand";
@@ -13,10 +14,8 @@ export type CartItem = {
 };
 
 type CartStore = {
-  // canonical state
   cart: CartItem[];
 
-  // canonical actions
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
   remove: (slug: string) => void;
   inc: (slug: string) => void;
@@ -24,16 +23,13 @@ type CartStore = {
   setQty: (slug: string, qty: number) => void;
   clear: () => void;
 
-  // selectors
   count: () => number;
   subtotal: () => number;
 
-  // aliases (so old names also work)
   addToCart: (item: Omit<CartItem, "qty">, qty?: number) => void;
   removeFromCart: (slug: string) => void;
   clearCart: () => void;
 
-  // legacy getter for older code expecting items
   get items(): CartItem[];
 };
 
@@ -84,12 +80,10 @@ export const useCart = create<CartStore>()(
       count: () => get().cart.reduce((n, i) => n + i.qty, 0),
       subtotal: () => get().cart.reduce((n, i) => n + i.qty * i.price, 0),
 
-      // aliases
       addToCart: (item, qty) => get().add(item, qty),
       removeFromCart: (slug) => get().remove(slug),
       clearCart: () => get().clear(),
 
-      // legacy getter for items
       get items() {
         return get().cart;
       },

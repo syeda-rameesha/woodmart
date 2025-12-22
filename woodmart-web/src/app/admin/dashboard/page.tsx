@@ -1,10 +1,9 @@
-// src/app/admin/dashboard/page.tsx
 "use client";
 
 import { useAdmin } from "@/store/useAdmin";
 import { useRouter } from "next/navigation";
 import AdminGuard from "@/components/admin/AdminGuard";
-import OrdersTable from "@/components/admin/OrdersTable"; // 👈 add this import
+import OrdersTable from "@/components/admin/OrdersTable";
 
 export default function AdminDashboardPage() {
   const token = useAdmin((s) => s.token);
@@ -13,7 +12,7 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminGuard>
-      <div className="container mx-auto px-4 py-10">
+      <div className="px-4 py-10">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
@@ -35,10 +34,14 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* ✅ Add this below your page header */}
+        {/* 📌 Recent Orders Section */}
         <div className="mt-10">
           <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
-          <OrdersTable /> {/* 👈 this will display the orders list */}
+
+          {/* ⭐ WRAP ORDERS TABLE TO PREVENT OVERFLOW */}
+          <div className="admin-table-wrapper bg-white border rounded p-3">
+            <OrdersTable />
+          </div>
         </div>
       </div>
     </AdminGuard>

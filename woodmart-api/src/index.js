@@ -2,25 +2,26 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import path from "path";
 
 import { connectMongo } from "./db/mongo.js";
+import contactRoutes from "./routes/contact.routes.js";
 
 // ✅ make sure these come from the routes folder (not models)
 import productRoutes from "./routes/product.routes.js";
-import ordersRoutes  from "./routes/orders.routes.js";
-import adminRoutes   from "./routes/admin.routes.js";
+import ordersRoutes from "./routes/orders.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+
+// <-- new upload route import
+import uploadRoutes from "./routes/upload.routes.js";
 
 dotenv.config();
 
-const app  = express();
-const PORT = process.env.PORT || 5000;
+const app = express();
+const PORT = process.env.PORT || 5001;
 const ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 
 // basic middleware
-app.use(cors({ origin: ORIGIN, credentials: true }));
-app.use(express.json());
-app.set("trust proxy", 1);
-
 // allow your frontend (localhost + 127.0.0.1)
 app.use(
   cors({
@@ -29,16 +30,26 @@ app.use(
   })
 );
 
+app.use(express.json());
+app.set("trust proxy", 1);
+
+// serve uploaded files (so /uploads/xxx is publicly reachable)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+// ===== MOUNT UPLOAD ROUTE FIRST (so /api/upload is reachable) =====
+app.use("/api/upload", uploadRoutes);
+
+// mount other routes
+app.use("/api/contact", contactRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", ordersRoutes);
+app.use("/api/admin", adminRoutes);
+
 // quick ping & health
 app.get("/", (_req, res) => res.json({ ok: true, service: "woodmart-api" }));
 app.get("/api/health", (_req, res) =>
   res.json({ ok: true, env: process.env.NODE_ENV || "dev", time: new Date().toISOString() })
 );
-
-// ✅ mount routers
-app.use("/api/products", productRoutes);
-app.use("/api/orders",   ordersRoutes);
-app.use("/api/admin",    adminRoutes);
 
 // not-found handler (for unknown /api/* paths)
 app.use("/api", (_req, res) => {

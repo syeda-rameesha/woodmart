@@ -1,0 +1,38 @@
+/* src/app/admin/admin.css */
+:root {
+  --admin-sidebar-width: 16rem; /* 256px */
+}
+
+html, body, #__next {
+  height: 100%;
+  margin: 0;
+}
+
+/* sidebar column style */
+.admin-sidebar {
+  width: var(--admin-sidebar-width);
+  min-width: var(--admin-sidebar-width);
+}
+
+/* main content wrapper */
+.admin-content {
+  flex: 1;
+  min-height: 100vh;
+  background: #f8fafc;
+  /* ensure it can scroll vertically if content tall */
+  overflow-y: auto;
+}
+
+/* allow tables/large blocks to scroll horizontally instead of breaking layout */
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* responsive: on small screens stack the sidebar above content */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 100%;
+    min-width: auto;
+  }
+}

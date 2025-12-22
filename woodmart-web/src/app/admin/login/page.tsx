@@ -1,19 +1,21 @@
+// src/app/admin/login/page.tsx
 "use client";
-import { useState } from "react";
+
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FormEvent } from "react";
+import toast from "react-hot-toast";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
     try {
       const res = await fetch(`${apiBase}/admin/login`, {
@@ -25,16 +27,27 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        return setError(data.message || "Login failed");
+        toast.error(data?.message || "Login failed");
+        setLoading(false);
+        return;
       }
 
       // Save token
-      localStorage.setItem("admin_token", data.token);
+      if (data?.token) {
+        localStorage.setItem("admin_token", data.token);
+      }
 
-      router.push("/admin/dashboard");
+      // Success toast
+      toast.success("Login successful!");
+
+      // small delay so user sees the toast, then redirect to dashboard
+      setTimeout(() => {
+        router.push("/admin/dashboard");
+      }, 800);
     } catch (err) {
-      console.error(err);
-      setError("Something went wrong");
+      console.error("Login error:", err);
+      toast.error("Something went wrong");
+      setLoading(false);
     }
   }
 
@@ -49,6 +62,7 @@ export default function AdminLoginPage() {
           className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
 
         <input
@@ -57,12 +71,15 @@ export default function AdminLoginPage() {
           className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-
-        <button className="w-full bg-black text-white p-2 rounded" type="submit">
-          Sign In
+        <button
+          className="w-full bg-black text-white p-2 rounded disabled:opacity-50"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In"}
         </button>
       </form>
     </div>

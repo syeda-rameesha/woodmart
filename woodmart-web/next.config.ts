@@ -12,6 +12,19 @@ const nextConfig: NextConfig = {
     // (optional) if you prefer the older style:
     // domains: ["files.catbox.moe", "images.unsplash.com", "cdn11.bigcommerce.com"],
   },
+
+  // Rewrites: proxy any /api/* request to your backend server in dev
+  // (Frontend code keeps calling /api/... and avoids cross-origin).
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: process.env.NEXT_PUBLIC_API_URL
+          ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/:path*`
+          : "http://localhost:5001/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

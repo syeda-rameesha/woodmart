@@ -36,7 +36,8 @@ export default function ProductGrid({
       {safe.map((p, i) => (
         <ProductCard
           key={(p._id ?? p.slug ?? p.title ?? i).toString()}
-          item={p} // ✅ No as Item needed now
+          // spread product props so ProductCard receives title, price, image, etc.
+          {...(p as Item)}
         />
       ))}
     </div>
