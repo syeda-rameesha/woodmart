@@ -10,7 +10,7 @@
  */
 
 const API_BASE: string =
-  (process.env.NEXT_PUBLIC_API_URL as string) || "http://localhost:5001/api";
+  (process.env.NEXT_PUBLIC_API_URL as string) || "woodmart-production.up.railway.app";
 
 function getErrMsg(err: unknown): string {
   try {

@@ -21,7 +21,7 @@ type Item = {
 type CountMap = Record<string, number>;
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+  process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 const CATEGORY_META: Record<
   string,

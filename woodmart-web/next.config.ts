@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         destination: process.env.NEXT_PUBLIC_API_URL
           ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/:path*`
-          : "http://localhost:5001/api/:path*",
+          : "woodmart-production.up.railway.app",
       },
     ];
   },

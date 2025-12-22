@@ -1,5 +1,5 @@
 // woodmart-web/src/lib/adminApi.ts
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 /**
  * adminApi - small wrapper to call the backend API for admin endpoints.

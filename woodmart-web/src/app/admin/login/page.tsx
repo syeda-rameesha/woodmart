@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

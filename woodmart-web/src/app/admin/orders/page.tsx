@@ -5,7 +5,7 @@ import { useAdmin } from "@/store/useAdmin";
 import AdminGuard from "@/components/admin/AdminGuard";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+  process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 type OrderItem = {
   title?: string;

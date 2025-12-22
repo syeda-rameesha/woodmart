@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import AdminGuard from "@/components/admin/AdminGuard";
 import { useAdmin } from "@/store/useAdmin";
 // NOTE: we will call the admin API directly using full URL (bypass wrapper)
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 type Product = {
   _id: string;

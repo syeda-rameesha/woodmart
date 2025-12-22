@@ -1,7 +1,7 @@
 // woodmart-web/src/lib/api.ts
 // Copy — paste this exact file (TypeScript). If your project uses .js, remove type annotations.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 /**
  * Simple wrapper around fetch that throws on non-OK,

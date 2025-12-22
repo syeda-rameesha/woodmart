@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/store/useCart";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 const money = (n?: number) => `$${Number(n || 0).toFixed(2)}`;
 
 export default function CheckoutPageClient() {

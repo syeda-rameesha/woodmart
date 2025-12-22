@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 export async function adminFetch(path: string, token: string, init?: RequestInit) {
   const r = await fetch(`${API}${path}`, {

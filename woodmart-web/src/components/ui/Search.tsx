@@ -40,7 +40,7 @@ export default function Search() {
       }
       try {
         setLoading(true);
-        const base = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5001/api";
+        const base = process.env.NEXT_PUBLIC_API_BASE || "woodmart-production.up.railway.app";
         const r = await fetch(`${base}/products/search?q=${encodeURIComponent(q)}&limit=6`);
         const data = await r.json();
         setResults(data.items || []);
