@@ -1,7 +1,7 @@
 "use client";
 import AdminGuard from "@/components/admin/AdminGuard";
 import ProductForm from "@/components/admin/ProductForm";
-import OrderTable from "@/components/admin/OrderTable";
+import OrdersTable from "@/components/admin/OrdersTable";
 import { useAdmin } from "@/store/useAdmin";
 
 export default function AdminDashboardPage() {
@@ -18,7 +18,7 @@ export default function AdminDashboardPage() {
           <ProductForm />
           <div>
             <h3 className="font-semibold mb-2">Orders</h3>
-            <OrderTable />
+            <OrdersTable />
           </div>
         </div>
       </div>
