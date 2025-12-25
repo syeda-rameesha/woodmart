@@ -1,43 +1,35 @@
-// src/components/ui/ProductGrid.tsx
-import ProductCard from "./ProductCard";
+import ProductCard from "@/components/ui/ProductCard";
 
-type Item = {
+type Product = {
   _id?: string;
-  slug?: string;
   title?: string;
-  price?: number;
-  salePrice?: number;
+  slug?: string;
   brand?: string;
-  image?: string;
-  images?: string[];
+  price?: number | string;
+  salePrice?: number | string | null;
+  image?: string | null;
+  images?: string[] | null;
 };
 
-export default function ProductGrid({
-  items = [],
-}: {
-  items?: unknown[];
-}) {
-  // ✅ Filter valid objects only
-  const safe: Item[] = Array.isArray(items)
-    ? items.filter(
-        (x): x is Item =>
-          !!x &&
-          typeof x === "object" &&
-          ("_id" in x || "title" in x || "slug" in x)
-      )
-    : [];
+type Props = {
+  products?: Product[];
+  items?: Product[]; // 👈 allow items too
+};
 
-  if (!safe.length) {
-    return <p className="text-gray-500">No products found.</p>;
-  }
+export default function ProductGrid({ products, items }: Props) {
+  // ✅ support both props
+  const safe = Array.isArray(products)
+    ? products
+    : Array.isArray(items)
+    ? items
+    : [];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {safe.map((p, i) => (
         <ProductCard
-          key={(p._id ?? p.slug ?? p.title ?? i).toString()}
-          // spread product props so ProductCard receives title, price, image, etc.
-          {...(p as Item)}
+          key={(p._id ?? p.slug ?? i).toString()}
+          {...p}
         />
       ))}
     </div>
