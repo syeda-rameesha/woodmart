@@ -1,6 +1,7 @@
 const API_BASE =
- process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api"
- 
+  process.env.NEXT_PUBLIC_API_URL ??
+  "https://woodmart-production.up.railway.app/api";
+
 export default async function api<T>(
   path: string,
   options?: RequestInit
