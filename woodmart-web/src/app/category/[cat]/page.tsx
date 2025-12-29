@@ -21,8 +21,8 @@ type CountMap = Record<string, number>;
 
 /* ✅ USE ENV VARIABLE ONLY */
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:5001/api"; // local fallback ONLY
+  process.env.NEXT_PUBLIC_API_URL ??
+  "https://woodmart-production.up.railway.app/api"; // 
 
 const CATEGORY_META: Record<
   string,
