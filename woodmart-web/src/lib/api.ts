@@ -1,8 +1,6 @@
-// src/lib/api.ts
-
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-
+ process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api"
+ 
 export default async function api<T>(
   path: string,
   options?: RequestInit
@@ -21,5 +19,5 @@ export default async function api<T>(
     throw new Error(text || "API request failed");
   }
 
-  return res.json() as Promise<T>;
+  return res.json();
 }
