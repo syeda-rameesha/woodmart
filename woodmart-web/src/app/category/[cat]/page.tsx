@@ -1,4 +1,3 @@
-// src/app/category/[cat]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import CategoryChips from "@/components/category/CategoryChips";
 import { ALL_CATS } from "@/lib/categories";
+import api from "@/lib/api"; // ✅ IMPORTANT
 
 type Item = {
   _id: string;
@@ -19,9 +19,6 @@ type Item = {
 };
 
 type CountMap = Record<string, number>;
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "woodmart-production.up.railway.app";
 
 const CATEGORY_META: Record<
   string,
@@ -61,9 +58,8 @@ const CATEGORY_META: Record<
 };
 
 export default function CategoryPage() {
-  // ✅ read [cat] from URL
   const params = useParams<{ cat: string }>();
-  const catKey = (params?.cat || "").toLowerCase(); // e.g. "fashion"
+  const catKey = (params?.cat || "").toLowerCase();
 
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,17 +69,15 @@ export default function CategoryPage() {
   const [counts, setCounts] = useState<CountMap>({});
 
   useEffect(() => {
-    if (!catKey) return; // nothing to load yet
+    if (!catKey) return;
 
     let cancelled = false;
 
     (async () => {
-      console.log("CategoryPage catKey =", catKey);
-
-      // ----- meta / hero -----
+      // ---------- META ----------
       const meta =
         CATEGORY_META[catKey] ?? {
-          title: catKey || "Category",
+          title: catKey,
           hero: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1600&auto=format&fit=crop",
         };
 
@@ -93,14 +87,11 @@ export default function CategoryPage() {
         setDesc(meta.description || "");
       }
 
-      // ----- fetch products for this category -----
+      // ---------- PRODUCTS ----------
       try {
-        const res = await fetch(
-          `${API_BASE}/products?cat=${encodeURIComponent(catKey)}`,
-          { cache: "no-store" }
+        const data = await api<{ items: Item[] }>(
+          `/products?cat=${encodeURIComponent(catKey)}`
         );
-        const data = await res.json();
-        console.log("Category products response", data);
 
         if (!cancelled) {
           setItems(Array.isArray(data.items) ? data.items : []);
@@ -112,24 +103,23 @@ export default function CategoryPage() {
         if (!cancelled) setLoading(false);
       }
 
-      // ----- counts for chips -----
+      // ---------- COUNTS ----------
       try {
         const entries = await Promise.all(
           ALL_CATS.map(async (c) => {
-            const r = await fetch(
-              `${API_BASE}/products?cat=${encodeURIComponent(
-                c.key
-              )}&limit=1`,
-              { cache: "no-store" }
+            const r = await api<{ total: number; items?: Item[] }>(
+              `/products?cat=${encodeURIComponent(c.key)}&limit=1`
             );
-            const d = await r.json();
             return [
               c.key,
-              Number(d.total ?? d.items?.length ?? 0),
+              Number(r.total ?? r.items?.length ?? 0),
             ] as const;
           })
         );
-        if (!cancelled) setCounts(Object.fromEntries(entries));
+
+        if (!cancelled) {
+          setCounts(Object.fromEntries(entries));
+        }
       } catch (err) {
         console.error("Category counts fetch error", err);
         if (!cancelled) setCounts({});
@@ -161,9 +151,8 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      {/* Category chips */}
+      {/* CHIPS */}
       <div className="mt-4">
-        {/* ✅ use catKey for active */}
         <CategoryChips active={catKey} counts={counts} />
       </div>
 
@@ -202,17 +191,13 @@ export default function CategoryPage() {
                 <div className="text-sm mt-1">
                   {p.salePrice != null ? (
                     <>
-                      <span className="font-semibold">
-                        ${p.salePrice}
-                      </span>{" "}
+                      <span className="font-semibold">${p.salePrice}</span>{" "}
                       <span className="line-through text-gray-400">
                         ${p.price}
                       </span>
                     </>
                   ) : (
-                    <span className="font-semibold">
-                      ${p.price}
-                    </span>
+                    <span className="font-semibold">${p.price}</span>
                   )}
                 </div>
               </div>
