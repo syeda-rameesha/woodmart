@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import CategoryChips from "@/components/category/CategoryChips";
 import { ALL_CATS } from "@/lib/categories";
-import api from "@/lib/api"; // ✅ IMPORTANT
 
 type Item = {
   _id: string;
@@ -20,6 +19,11 @@ type Item = {
 
 type CountMap = Record<string, number>;
 
+/* ✅ USE ENV VARIABLE ONLY */
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5001/api"; // local fallback ONLY
+
 const CATEGORY_META: Record<
   string,
   { title: string; hero: string; description?: string }
@@ -31,13 +35,11 @@ const CATEGORY_META: Record<
   },
   cooking: {
     title: "Cooking",
-    hero: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=1600&auto=format&fit=crop",
-    description: "Cookware, tools & accessories for your kitchen.",
+    hero: "https://images.unsplash.com/photo-1447933601403-0c6688de566e",
   },
   fashion: {
     title: "Fashion",
     hero: "https://files.catbox.moe/zw24zm.jpeg",
-    description: "Trending apparel & accessories.",
   },
   accessories: {
     title: "Accessories",
@@ -53,7 +55,7 @@ const CATEGORY_META: Record<
   },
   toys: {
     title: "Toys",
-    hero: "https://images.unsplash.com/photo-1601758124499-1a5698617934?q=80&w=1600&auto=format&fit=crop",
+    hero: "https://images.unsplash.com/photo-1601758124499-1a5698617934",
   },
 };
 
@@ -63,56 +65,46 @@ export default function CategoryPage() {
 
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState("Category");
-  const [hero, setHero] = useState("");
-  const [desc, setDesc] = useState("");
   const [counts, setCounts] = useState<CountMap>({});
+
+  const meta =
+    CATEGORY_META[catKey] ?? {
+      title: catKey,
+      hero:
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+    };
 
   useEffect(() => {
     if (!catKey) return;
 
     let cancelled = false;
 
-    (async () => {
-      // ---------- META ----------
-      const meta =
-        CATEGORY_META[catKey] ?? {
-          title: catKey,
-          hero: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1600&auto=format&fit=crop",
-        };
-
-      if (!cancelled) {
-        setTitle(meta.title);
-        setHero(meta.hero);
-        setDesc(meta.description || "");
-      }
-
-      // ---------- PRODUCTS ----------
+    async function load() {
       try {
-        const data = await api<{ items: Item[] }>(
-          `/products?cat=${encodeURIComponent(catKey)}`
+        /* ✅ PRODUCTS */
+        const res = await fetch(
+          `${API_BASE}/products?cat=${encodeURIComponent(catKey)}`,
+          { cache: "no-store" }
         );
+        const data = await res.json();
 
         if (!cancelled) {
           setItems(Array.isArray(data.items) ? data.items : []);
         }
-      } catch (err) {
-        console.error("Category products fetch error", err);
-        if (!cancelled) setItems([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
 
-      // ---------- COUNTS ----------
-      try {
+        /* ✅ COUNTS */
         const entries = await Promise.all(
           ALL_CATS.map(async (c) => {
-            const r = await api<{ total: number; items?: Item[] }>(
-              `/products?cat=${encodeURIComponent(c.key)}&limit=1`
+            const r = await fetch(
+              `${API_BASE}/products?cat=${encodeURIComponent(
+                c.key
+              )}&limit=1`,
+              { cache: "no-store" }
             );
+            const d = await r.json();
             return [
               c.key,
-              Number(r.total ?? r.items?.length ?? 0),
+              Number(d.total ?? d.items?.length ?? 0),
             ] as const;
           })
         );
@@ -121,11 +113,17 @@ export default function CategoryPage() {
           setCounts(Object.fromEntries(entries));
         }
       } catch (err) {
-        console.error("Category counts fetch error", err);
-        if (!cancelled) setCounts({});
+        console.error("Category fetch failed:", err);
+        if (!cancelled) {
+          setItems([]);
+          setCounts({});
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    })();
+    }
 
+    load();
     return () => {
       cancelled = true;
     };
@@ -135,17 +133,15 @@ export default function CategoryPage() {
     <div className="min-h-screen">
       {/* HERO */}
       <div
-        className="h-56 md:h-72 w-full bg-cover bg-center rounded-md relative"
-        style={{ backgroundImage: `url(${hero})` }}
+        className="h-56 md:h-72 w-full bg-cover bg-center relative"
+        style={{ backgroundImage: `url(${meta.hero})` }}
       >
-        <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px]" />
-        <div className="relative h-full flex items-center justify-center text-center">
-          <div className="px-4">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white">
-              {title}
-            </h1>
-            {!!desc && (
-              <p className="mt-2 text-white/90 max-w-2xl">{desc}</p>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative h-full flex items-center justify-center text-center text-white">
+          <div>
+            <h1 className="text-4xl font-bold">{meta.title}</h1>
+            {meta.description && (
+              <p className="mt-2 opacity-90">{meta.description}</p>
             )}
           </div>
         </div>
@@ -156,29 +152,20 @@ export default function CategoryPage() {
         <CategoryChips active={catKey} counts={counts} />
       </div>
 
-      {/* RESULTS */}
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mt-6 mb-2">
-          <p className="text-sm text-gray-500">
-            {loading ? "Loading…" : `${items.length} product(s)`}
-          </p>
-          <Link
-            href="/"
-            className="text-sm text-gray-600 hover:text-black underline"
-          >
-            ← Back to home
-          </Link>
-        </div>
+      {/* PRODUCTS */}
+      <div className="container mx-auto px-4 mt-6">
+        <p className="text-sm text-gray-500 mb-4">
+          {loading ? "Loading…" : `${items.length} product(s)`}
+        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {items.map((p) => (
             <Link
               key={p._id}
               href={`/shop/${p.slug}`}
-              className="border rounded-md overflow-hidden hover:shadow transition bg-white"
+              className="border rounded-md overflow-hidden hover:shadow bg-white"
             >
               <div className="aspect-[4/3] bg-gray-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.image || p.images?.[0] || "/placeholder.png"}
                   alt={p.title}
@@ -188,17 +175,8 @@ export default function CategoryPage() {
               <div className="p-3">
                 <div className="text-xs text-gray-500">{p.brand}</div>
                 <div className="font-medium truncate">{p.title}</div>
-                <div className="text-sm mt-1">
-                  {p.salePrice != null ? (
-                    <>
-                      <span className="font-semibold">${p.salePrice}</span>{" "}
-                      <span className="line-through text-gray-400">
-                        ${p.price}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="font-semibold">${p.price}</span>
-                  )}
+                <div className="text-sm mt-1 font-semibold">
+                  ${p.salePrice ?? p.price}
                 </div>
               </div>
             </Link>
@@ -209,6 +187,12 @@ export default function CategoryPage() {
               No products found for this category.
             </div>
           )}
+        </div>
+
+        <div className="mt-6">
+          <Link href="/" className="text-sm underline">
+            ← Back to home
+          </Link>
         </div>
       </div>
     </div>
