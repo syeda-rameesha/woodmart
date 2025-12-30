@@ -25,7 +25,11 @@ const ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
 // allow your frontend (localhost + 127.0.0.1)
 app.use(
   cors({
-    origin: [/^http:\/\/localhost:3000$/, /^http:\/\/127\.0\.0\.1:3000$/],
+    origin: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://woodmart-web.vercel.app",
+    ],
     credentials: true,
   })
 );

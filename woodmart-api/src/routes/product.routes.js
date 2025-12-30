@@ -1,4 +1,3 @@
-// woodmart-api/src/routes/product.routes.js
 import { Router } from "express";
 import Product from "../models/Product.js";
 
@@ -18,7 +17,7 @@ function buildSort(sort) {
     case "brand-asc":
       return { brand: 1 };
     default:
-      return {}; // no sort
+      return { createdAt: -1 };
   }
 }
 
@@ -29,7 +28,7 @@ function normalizePage(page, limit) {
   return { p, l, skip };
 }
 
-// ---------- SEARCH (for header search, etc.) ----------
+// ---------- SEARCH ----------
 router.get("/search", async (req, res) => {
   try {
     const q = String(req.query.q || "").trim();
@@ -42,6 +41,7 @@ router.get("/search", async (req, res) => {
         { title: { $regex: q, $options: "i" } },
         { brand: { $regex: q, $options: "i" } },
         { slug: { $regex: q, $options: "i" } },
+        { category: { $regex: q, $options: "i" } },
       ],
     };
 
@@ -59,14 +59,14 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// ---------- LIST with q, sort, page, limit, cat ----------
+// ---------- LIST (q, sort, page, limit, category) ----------
 router.get("/", async (req, res) => {
   try {
     const q = String(req.query.q || "").trim();
     const sort = String(req.query.sort || "");
     const page = Number(req.query.page || 1);
     const limit = Number(req.query.limit || 12);
-    const cat = String(req.query.cat || "").trim(); // <-- category from query
+    const cat = String(req.query.cat || "").trim();
 
     const filter = {};
 
@@ -79,10 +79,12 @@ router.get("/", async (req, res) => {
       ];
     }
 
-    // category filter (case-insensitive)
+    // ✅ FIXED category logic (works for prod data)
     if (cat) {
-      // will match "lighting", "Lighting", "LIGHTING", etc.
-      filter.category = { $regex: `^${cat}$`, $options: "i" };
+      filter.category = {
+        $regex: cat,
+        $options: "i",
+      };
     }
 
     const { p, l, skip } = normalizePage(page, limit);
@@ -116,10 +118,8 @@ router.get("/:key", async (req, res) => {
   try {
     const { key } = req.params;
 
-    // try slug first
     let product = await Product.findOne({ slug: key }).lean();
 
-    // if not slug and looks like ObjectId, try _id
     if (!product && /^[0-9a-fA-F]{24}$/.test(key)) {
       product = await Product.findById(key).lean();
     }
