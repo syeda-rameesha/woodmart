@@ -19,10 +19,8 @@ type Item = {
 
 type CountMap = Record<string, number>;
 
-/* ✅ USE ENV VARIABLE ONLY */
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ??
-  "https://woodmart-production.up.railway.app/api"; // 
+// ✅ FINAL: SINGLE SOURCE OF TRUTH
+const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
 
 const CATEGORY_META: Record<
   string,
@@ -35,7 +33,7 @@ const CATEGORY_META: Record<
   },
   cooking: {
     title: "Cooking",
-    hero: "https://images.unsplash.com/photo-1447933601403-0c6688de566e",
+    hero: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=1600&auto=format&fit=crop",
   },
   fashion: {
     title: "Fashion",
@@ -55,71 +53,49 @@ const CATEGORY_META: Record<
   },
   toys: {
     title: "Toys",
-    hero: "https://images.unsplash.com/photo-1601758124499-1a5698617934",
+    hero: "https://images.unsplash.com/photo-1601758124499-1a5698617934?q=80&w=1600&auto=format&fit=crop",
   },
 };
 
 export default function CategoryPage() {
   const params = useParams<{ cat: string }>();
-  const catKey = (params?.cat || "").toLowerCase();
+  const catKey = params.cat.toLowerCase();
 
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState<CountMap>({});
 
-  const meta =
-    CATEGORY_META[catKey] ?? {
-      title: catKey,
-      hero:
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
-    };
-
   useEffect(() => {
-    if (!catKey) return;
-
     let cancelled = false;
 
     async function load() {
       try {
-        /* ✅ PRODUCTS */
         const res = await fetch(
           `${API_BASE}/products?cat=${encodeURIComponent(catKey)}`,
           { cache: "no-store" }
         );
         const data = await res.json();
+        if (!cancelled) setItems(data.items || []);
+      } catch {
+        if (!cancelled) setItems([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
 
-        if (!cancelled) {
-          setItems(Array.isArray(data.items) ? data.items : []);
-        }
-
-        /* ✅ COUNTS */
+      try {
         const entries = await Promise.all(
           ALL_CATS.map(async (c) => {
             const r = await fetch(
-              `${API_BASE}/products?cat=${encodeURIComponent(
-                c.key
-              )}&limit=1`,
+              `${API_BASE}/products?cat=${encodeURIComponent(c.key)}&limit=1`,
               { cache: "no-store" }
             );
             const d = await r.json();
-            return [
-              c.key,
-              Number(d.total ?? d.items?.length ?? 0),
-            ] as const;
+            return [c.key, d.total ?? 0] as const;
           })
         );
-
-        if (!cancelled) {
-          setCounts(Object.fromEntries(entries));
-        }
-      } catch (err) {
-        console.error("Category fetch failed:", err);
-        if (!cancelled) {
-          setItems([]);
-          setCounts({});
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setCounts(Object.fromEntries(entries));
+      } catch {
+        if (!cancelled) setCounts({});
       }
     }
 
@@ -129,71 +105,53 @@ export default function CategoryPage() {
     };
   }, [catKey]);
 
+  const meta = CATEGORY_META[catKey];
+
   return (
     <div className="min-h-screen">
-      {/* HERO */}
       <div
-        className="h-56 md:h-72 w-full bg-cover bg-center relative"
-        style={{ backgroundImage: `url(${meta.hero})` }}
+        className="h-56 md:h-72 bg-cover bg-center"
+        style={{ backgroundImage: `url(${meta?.hero})` }}
       >
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative h-full flex items-center justify-center text-center text-white">
-          <div>
-            <h1 className="text-4xl font-bold">{meta.title}</h1>
-            {meta.description && (
-              <p className="mt-2 opacity-90">{meta.description}</p>
-            )}
-          </div>
+        <div className="h-full bg-black/40 flex items-center justify-center text-white">
+          <h1 className="text-4xl font-bold">{meta?.title}</h1>
         </div>
       </div>
 
-      {/* CHIPS */}
-      <div className="mt-4">
-        <CategoryChips active={catKey} counts={counts} />
-      </div>
+      <CategoryChips active={catKey} counts={counts} />
 
-      {/* PRODUCTS */}
       <div className="container mx-auto px-4 mt-6">
-        <p className="text-sm text-gray-500 mb-4">
-          {loading ? "Loading…" : `${items.length} product(s)`}
-        </p>
+        {loading && <p>Loading…</p>}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {!loading && items.length === 0 && (
+          <p className="text-center text-gray-500 py-12">
+            No products found for this category.
+          </p>
+        )}
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {items.map((p) => (
             <Link
               key={p._id}
               href={`/shop/${p.slug}`}
-              className="border rounded-md overflow-hidden hover:shadow bg-white"
+              className="border rounded overflow-hidden"
             >
-              <div className="aspect-[4/3] bg-gray-100">
-                <img
-                  src={p.image || p.images?.[0] || "/placeholder.png"}
-                  alt={p.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-3">
-                <div className="text-xs text-gray-500">{p.brand}</div>
-                <div className="font-medium truncate">{p.title}</div>
-                <div className="text-sm mt-1 font-semibold">
-                  ${p.salePrice ?? p.price}
-                </div>
+              <img
+                src={p.image || p.images?.[0] || "/placeholder.png"}
+                alt={p.title}
+                className="w-full h-40 object-cover"
+              />
+              <div className="p-2">
+                <p className="font-medium">{p.title}</p>
+                <p>${p.salePrice ?? p.price}</p>
               </div>
             </Link>
           ))}
-
-          {!loading && items.length === 0 && (
-            <div className="col-span-full text-center text-gray-500 py-12">
-              No products found for this category.
-            </div>
-          )}
         </div>
 
-        <div className="mt-6">
-          <Link href="/" className="text-sm underline">
-            ← Back to home
-          </Link>
-        </div>
+        <Link href="/" className="block text-center mt-6 underline">
+          ← Back to home
+        </Link>
       </div>
     </div>
   );
