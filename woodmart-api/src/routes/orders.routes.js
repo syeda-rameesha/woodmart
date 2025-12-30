@@ -101,7 +101,7 @@ router.get("/admin", requireAdmin, async (req, res) => {
 });
 
 // ============ ADMIN: UPDATE ORDER STATUS ============
-router.patch("/admin/:id/status", requireAdmin, async (req, res) => {
+router.put("/:id/status", requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -115,17 +115,17 @@ router.patch("/admin/:id/status", requireAdmin, async (req, res) => {
       id,
       { status },
       { new: true }
-    );
+    ).lean();
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    return res.json({ ok: true, status: order.status });
+    return res.json({ ok: true, item: order });
   } catch (err) {
-    console.error("PATCH /api/orders/admin/:id/status error:", err);
+    console.error("PUT /api/orders/:id/status error:", err);
     return res.status(500).json({ message: "Failed to update status" });
-  } 
+  }
 });
 
 export default router;
