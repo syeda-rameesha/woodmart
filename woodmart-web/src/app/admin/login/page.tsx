@@ -24,13 +24,22 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+     const data = await res.json();
 
-      if (!res.ok) {
-        toast.error(data?.message || "Login failed");
-        setLoading(false);
-        return;
-      }
+if (!res.ok) {
+  toast.error(data?.message || "Login failed");
+  setLoading(false);
+  return;
+}
+
+// ✅ SAVE TOKEN
+localStorage.setItem("admin_token", data.token);
+
+// ✅ OPTIONAL: save user role if backend sends it
+// localStorage.setItem("admin_role", data.role);
+
+// ✅ REDIRECT
+router.push("/admin/dashboard");
 
       // Save token
       if (data?.token) {
