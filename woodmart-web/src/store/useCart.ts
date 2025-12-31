@@ -1,13 +1,9 @@
-// src/app/store/useCart.ts
-"use client";
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type CartItem = {
   _id: string;
   title: string;
-  slug: string;
   price: number;
   image?: string;
   qty: number;
@@ -15,22 +11,11 @@ export type CartItem = {
 
 type CartStore = {
   cart: CartItem[];
-
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  remove: (slug: string) => void;
-  inc: (slug: string) => void;
-  dec: (slug: string) => void;
-  setQty: (slug: string, qty: number) => void;
+  remove: (_id: string) => void;
+  inc: (_id: string) => void;
+  dec: (_id: string) => void;
   clear: () => void;
-
-  count: () => number;
-  subtotal: () => number;
-
-  addToCart: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  removeFromCart: (slug: string) => void;
-  clearCart: () => void;
-
-  get items(): CartItem[];
 };
 
 export const useCart = create<CartStore>()(
@@ -38,56 +23,44 @@ export const useCart = create<CartStore>()(
     (set, get) => ({
       cart: [],
 
-      add: (item, qty = 1) =>
-        set((s) => {
-          const has = s.cart.find((i) => i.slug === item.slug);
-          if (has) {
-            return {
-              cart: s.cart.map((i) =>
-                i.slug === item.slug ? { ...i, qty: i.qty + qty } : i
-              ),
-            };
-          }
-          return { cart: [...s.cart, { ...item, qty }] };
+      add: (item, qty = 1) => {
+        const cart = get().cart;
+        const found = cart.find((i) => i._id === item._id);
+
+        if (found) {
+          set({
+            cart: cart.map((i) =>
+              i._id === item._id ? { ...i, qty: i.qty + qty } : i
+            ),
+          });
+        } else {
+          set({ cart: [...cart, { ...item, qty }] });
+        }
+      },
+
+      remove: (_id) =>
+        set({ cart: get().cart.filter((i) => i._id !== _id) }),
+
+      inc: (_id) =>
+        set({
+          cart: get().cart.map((i) =>
+            i._id === _id ? { ...i, qty: i.qty + 1 } : i
+          ),
         }),
 
-      remove: (slug) =>
-        set((s) => ({ cart: s.cart.filter((i) => i.slug !== slug) })),
-
-      inc: (slug) =>
-        set((s) => ({
-          cart: s.cart.map((i) =>
-            i.slug === slug ? { ...i, qty: i.qty + 1 } : i
-          ),
-        })),
-
-      dec: (slug) =>
-        set((s) => ({
-          cart: s.cart.map((i) =>
-            i.slug === slug ? { ...i, qty: Math.max(1, i.qty - 1) } : i
-          ),
-        })),
-
-      setQty: (slug, qty) =>
-        set((s) => ({
-          cart: s.cart.map((i) =>
-            i.slug === slug ? { ...i, qty: Math.max(1, qty) } : i
-          ),
-        })),
+      dec: (_id) =>
+        set({
+          cart: get().cart
+            .map((i) =>
+              i._id === _id ? { ...i, qty: i.qty - 1 } : i
+            )
+            .filter((i) => i.qty > 0),
+        }),
 
       clear: () => set({ cart: [] }),
-
-      count: () => get().cart.reduce((n, i) => n + i.qty, 0),
-      subtotal: () => get().cart.reduce((n, i) => n + i.qty * i.price, 0),
-
-      addToCart: (item, qty) => get().add(item, qty),
-      removeFromCart: (slug) => get().remove(slug),
-      clearCart: () => get().clear(),
-
-      get items() {
-        return get().cart;
-      },
     }),
-    { name: "woodmart-cart" }
+    {
+      name: "woodmart-cart", // 🔐 localStorage key
+    }
   )
 );
