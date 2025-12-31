@@ -30,21 +30,29 @@ export const useCart = create<CartStore>()(
         if (found) {
           set({
             cart: cart.map((i) =>
-              i._id === item._id ? { ...i, qty: i.qty + qty } : i
+              i._id === item._id
+                ? { ...i, qty: i.qty + qty }
+                : i
             ),
           });
         } else {
-          set({ cart: [...cart, { ...item, qty }] });
+          set({
+            cart: [...cart, { ...item, qty }],
+          });
         }
       },
 
       remove: (_id) =>
-        set({ cart: get().cart.filter((i) => i._id !== _id) }),
+        set({
+          cart: get().cart.filter((i) => i._id !== _id),
+        }),
 
       inc: (_id) =>
         set({
           cart: get().cart.map((i) =>
-            i._id === _id ? { ...i, qty: i.qty + 1 } : i
+            i._id === _id
+              ? { ...i, qty: i.qty + 1 }
+              : i
           ),
         }),
 
@@ -52,7 +60,9 @@ export const useCart = create<CartStore>()(
         set({
           cart: get().cart
             .map((i) =>
-              i._id === _id ? { ...i, qty: i.qty - 1 } : i
+              i._id === _id
+                ? { ...i, qty: i.qty - 1 }
+                : i
             )
             .filter((i) => i.qty > 0),
         }),
@@ -60,7 +70,8 @@ export const useCart = create<CartStore>()(
       clear: () => set({ cart: [] }),
     }),
     {
-      name: "woodmart-cart", // 🔐 localStorage key
+      name: "woodmart-cart",
+      partialize: (state) => ({ cart: state.cart }),
     }
   )
 );
