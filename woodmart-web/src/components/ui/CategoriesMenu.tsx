@@ -21,7 +21,7 @@ export default function CategoriesMenu() {
 
   return (
     <div className="rounded-md border bg-white">
-      <div className="flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-t-md">
+      <div className="bg-gradient-to-r from-emerald-600 to-green-400 text-white font-semibold px-4 py-3 flex items-center justify-between rounded-t-md">
         <span className="font-semibold">BROWSE CATEGORIES</span>
         <span>▾</span>
       </div>

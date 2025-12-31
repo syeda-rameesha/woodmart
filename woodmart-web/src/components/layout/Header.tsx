@@ -23,17 +23,26 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-50 bg-white shadow">
         {/* Top strip */}
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-sm">
-          <div className="container mx-auto px-4 py-2 flex justify-between">
-            <p>Free shipping on orders over $150</p>
-            <div className="hidden sm:flex gap-4">
-              <Link href="/contact">Contact</Link>
-              <Link href="/shop">Shop</Link>
-              <Link href="/categories">Categories</Link>
-            </div>
-          </div>
-        </div>
+        {/* Top utility bar */}
+<div className="bg-gradient-to-r from-emerald-700 via-green-500 to-sky-600 text-white text-sm">
+  <div className="container mx-auto px-6 py-3 flex items-center justify-between">
+    <span className="uppercase tracking-wide">
+      Free shipping for all orders of $150
+    </span>
 
+    <div className="hidden md:flex items-center gap-4">
+      <Link href="/contact" className="hover:underline">
+        Contact Us
+      </Link>
+      <Link href="/shop" className="hover:underline">
+        Shop
+      </Link>
+      <Link href="/categories" className="hover:underline">
+        Categories
+      </Link>
+    </div>
+  </div>
+</div>
         {/* Main header */}
         <div className="border-b">
           <div className="container mx-auto h-[64px] px-4 flex items-center gap-6">
