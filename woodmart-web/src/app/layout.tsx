@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "WoodMart",
   description: "WoodMart demo built with Next.js + Tailwind",
 };
-
+{ /* FORCE REBUILD */}
 export default function RootLayout({
   children,
 }: {
