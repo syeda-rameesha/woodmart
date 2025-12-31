@@ -7,7 +7,7 @@ import { ALL_CATS } from "@/lib/categories";
 import HeroSlider from "@/components/home/HeroSlider";
 import { HOME_SLIDES } from "@/lib/home";
 
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 type Item = {
   _id: string;
