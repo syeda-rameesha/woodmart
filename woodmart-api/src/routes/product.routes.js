@@ -59,6 +59,25 @@ router.get("/search", async (req, res) => {
   }
 });
 
+
+// ---------- 🔥 DEALS / ON SALE ----------
+router.get("/deals", async (_req, res) => {
+  try {
+    const items = await Product.find({
+      salePrice: { $exists: true, $gt: 0 },
+    })
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean();
+
+    res.json({ items });
+  } catch (err) {
+    console.error("GET /api/products/deals error:", err);
+    res.status(500).json({ message: "Failed to load deals" });
+  }
+});
+
+
 // ---------- LIST (q, sort, page, limit, category) ----------
 router.get("/", async (req, res) => {
   try {
@@ -79,7 +98,7 @@ router.get("/", async (req, res) => {
       ];
     }
 
-    // ✅ FIXED category logic (works for prod data)
+    // category filter (case-insensitive)
     if (cat) {
       filter.category = {
         $regex: cat,
