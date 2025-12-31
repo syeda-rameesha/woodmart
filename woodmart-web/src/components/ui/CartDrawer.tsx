@@ -91,7 +91,7 @@ export default function CartDrawer({ open, onClose }: Props) {
         </div>
 
         {/* footer */}
-        <div className="p-4 border-t">
+        <div className="p-4 border-t pb-[96px] md:pb-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-600">Subtotal</span>
             <span className="font-semibold">${subtotal.toFixed(2)}</span>
