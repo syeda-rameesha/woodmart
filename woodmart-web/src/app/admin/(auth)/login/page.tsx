@@ -39,7 +39,7 @@ localStorage.setItem("admin_token", data.token);
 // localStorage.setItem("admin_role", data.role);
 
 // ✅ REDIRECT
-router.push("/admin/dashboard");
+router.replace("/admin/home");
 
       // Save token
       if (data?.token) {
@@ -51,7 +51,7 @@ router.push("/admin/dashboard");
 
       // small delay so user sees the toast, then redirect to dashboard
       setTimeout(() => {
-        router.push("/admin/dashboard");
+        router.replace("/admin/home");
       }, 800);
     } catch (err) {
       console.error("Login error:", err);

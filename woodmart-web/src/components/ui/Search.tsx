@@ -16,6 +16,7 @@ export default function Search() {
   return (
     <form onSubmit={onSubmit} className="w-full">
       <input
+        suppressHydrationWarning
         type="text"
         value={q}
         onChange={(e) => setQ(e.target.value)}
