@@ -3,7 +3,7 @@ import ProductGrid from "@/components/ui/ProductGrid";
 import CategoryChips from "@/components/category/CategoryChips";
 import api from "@/lib/api";
 import { ALL_CATS } from "@/lib/categories";
-
+import Link from "next/link";
 import HeroSlider from "@/components/home/HeroSlider";
 import { HOME_SLIDES } from "@/lib/home";
 
@@ -80,51 +80,58 @@ export default async function HomePage({
 </HeroSlider>
       </div>
 
-      {/* 🔥 DEALS OF THE DAY */}
-      {saleItems.length > 0 && (
-        <section className="container mx-auto px-4 mb-10">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            Deals of the Day
-          </h2>
+   {/* 🔥 DEALS OF THE DAY */}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {saleItems.map((p) => (
-              <div
-                key={p._id}
-                className="border rounded-md p-3 bg-white hover:shadow transition"
-              >
-                <div className="relative">
-                  <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-                    SALE
-                  </span>
+{saleItems.length > 0 && (
+  <section className="container mx-auto px-4 mb-12">
+    <h2 className="text-2xl font-bold mb-5">
+      Deals of the Day
+    </h2>
 
-                  <img
-                    src={p.image || p.images?.[0] || "/placeholder.png"}
-                    alt={p.title}
-                    className="w-full h-40 object-cover rounded"
-                  />
-                </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {saleItems.map((p) => (
+        <Link
+          key={p._id}
+          href={`/products/${p.slug}`}
+          className="block"
+        >
+          <div className="border rounded-md p-3 bg-white hover:shadow-md transition cursor-pointer h-full">
+            
+            {/* Image */}
+            <div className="relative">
+              <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded z-10">
+                SALE
+              </span>
 
-                <div className="mt-2">
-                  <p className="text-sm font-medium truncate">
-                    {p.title}
-                  </p>
+              <img
+                src={p.image || p.images?.[0] || "/placeholder.png"}
+                alt={p.title}
+                className="w-full h-40 object-cover rounded"
+              />
+            </div>
 
-                  <div className="text-sm mt-1">
-                    <span className="text-red-600 font-semibold mr-2">
-                      ${p.salePrice}
-                    </span>
-                    <span className="line-through text-gray-400">
-                      ${p.price}
-                    </span>
-                  </div>
-                </div>
+            {/* Content */}
+            <div className="mt-3">
+              <p className="text-sm font-medium truncate">
+                {p.title}
+              </p>
+
+              <div className="text-sm mt-1">
+                <span className="text-red-600 font-semibold mr-2">
+                  ${p.salePrice}
+                </span>
+                <span className="line-through text-gray-400">
+                  ${p.price}
+                </span>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
 
+          </div>
+        </Link>
+      ))}
+    </div>
+  </section>
+)}
       {/* MAIN LAYOUT */}
       <div className="container mx-auto px-4 pb-10 grid grid-cols-12 gap-6">
         {/* Sidebar */}

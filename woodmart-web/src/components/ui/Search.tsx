@@ -33,6 +33,8 @@ export default function Search() {
           rounded-md
           bg-white
           focus:outline-none
+          focus:ring-2 
+          focus:ring-green-600
         "
       />
     </form>

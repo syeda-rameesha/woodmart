@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Heart, ShoppingCart, Menu, X } from "lucide-react";
+import { Heart, ShoppingCart, Menu, X, User } from "lucide-react";
 import { useCart } from "@/store/useCart";
 import { useWishlist } from "@/store/useWishlist";
 import CartDrawer from "@/components/ui/CartDrawer";
 import Search from "@/components/ui/Search";
 import MobileBottomBar from "@/components/layout/MobileBottomBar";
+import { useUser } from "@/store/useUser";
+import AuthDrawer from "@/components/auth/AuthDrawer";
 
 export default function Header() {
   const cart = useCart((s) => s.cart);
@@ -16,9 +18,12 @@ export default function Header() {
   const wishlist = useWishlist((s) => s.items);
   const wishCount = wishlist.length;
 
+  const user = useUser((s) => s.user);
+
+  const [authOpen, setAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [mobileTab, setMobileTab] = useState<"menu" | "categories">("menu");
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-white shadow">
@@ -36,152 +41,159 @@ export default function Header() {
 
         {/* ===== MAIN HEADER ===== */}
         <div className="border-b">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <div className="container mx-auto px-6 py-5">
+            <div className="relative flex items-center">
 
-            {/* Mobile menu button */}
-            <button
-              className="lg:hidden"
-              onClick={() => setMobileOpen(true)}
-            >
-              <Menu />
-            </button>
+              {/* ===== LEFT ===== */}
+              <div className="flex items-center gap-4">
+                <button
+                  className="lg:hidden"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Open menu"
+                >
+                  <Menu />
+                </button>
 
-            {/* Logo */}
-            <Link
-              href="/"
-              className="absolute left-1/2 -translate-x-1/2 text-2xl font-bold md:static md:translate-x-0"
-              >
-              <img src="/logo.png" alt="WoodMart" className="h-8 inline-block" 
-               />
-            <span>woodmart.</span>
-            </Link>
-
-            {/* Mobile Cart */}
-              <button
-              onClick={() => setCartOpen(true)}
-              className="absolute right-4 md:hidden"
-             aria-label="Open cart"
-             >
-            <ShoppingCart size={20} />
-            {cartCount > 0 && (
-            <span className="absolute -top-1 -right-2 bg-yellow-400 text-black text-[11px] rounded-full w-[18px] h-[18px] grid place-items-center">
-            {cartCount}
-            </span>
-             )}
-             </button>
-
-            {/* Desktop Search ONLY */}
-            <div className="hidden lg:block flex-1 max-w-xl">
-              <Search />
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex gap-6 font-medium">
-              <Link href="/">Home</Link>
-              <Link href="/shop">Shop</Link>
-              <Link href="/categories">Categories</Link>
-              <Link href="/contact">Contact</Link>
-            </nav>
-
-            {/* Icons */}
-            <div className="hidden md:flex items-center gap-5 ml-auto">
-               <Link href="/wishlist" className="relative">
-                <Heart size={20} />
-                {wishCount > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-blue-600 text-white text-xs rounded-full w-4 h-4 grid place-items-center">
-                    {wishCount}
+                {/* Logo (left on desktop, centered on mobile) */}
+                <Link
+                  href="/"
+                  className="hidden lg:flex items-center gap-2"
+                >
+                  <img src="/logo.png" alt="WoodMart" className="h-12" />
+                  <span className="text-4xl font-bold tracking-tight">
+                    woodmart.
                   </span>
-                )}
-              </Link>
+                </Link>
+              </div>
 
-              <button 
-              onClick={() => setCartOpen(true)} 
-              className="relative"
-              >
-                <ShoppingCart size={20} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-yellow-400 text-black text-xs rounded-full w-4 h-4 grid place-items-center">
-                    {cartCount}
+              {/* ===== CENTER (mobile logo) ===== */}
+              <div className="absolute left-1/2 -translate-x-1/2 lg:hidden">
+                <Link href="/" className="flex items-center gap-2">
+                  <img src="/logo.png" alt="WoodMart" className="h-12" />
+                  <span className="text-4xl font-bold tracking-tight">
+                    woodmart.
                   </span>
-                )}
-              </button>
+                </Link>
+              </div>
+
+              {/* ===== CENTER (desktop search + nav) ===== */}
+              <div className="hidden lg:flex flex-1 items-center gap-8 ml-12">
+                <div className="flex-[2] min-w-[420px] max-w-[640px]">
+                  <Search />
+                </div>
+
+                <nav className="flex gap-6 font-medium whitespace-nowrap">
+                  <Link href="/">Home</Link>
+                  <Link href="/shop">Shop</Link>
+                  <Link href="/categories">Categories</Link>
+                  <Link href="/contact">Contact</Link>
+                </nav>
+              </div>
+
+              {/* ===== RIGHT ===== */}
+<div className="ml-auto flex items-center">
+
+  {/* Icons group (Heart + Cart together) */}
+  <div className="flex items-center gap-6">
+    {/* Wishlist */}
+    <Link href="/wishlist" className="relative hidden md:block">
+      <Heart size={20} />
+      {wishCount > 0 && (
+        <span className="absolute -top-1 -right-2 bg-blue-600 text-white text-xs rounded-full w-4 h-4 grid place-items-center">
+          {wishCount}
+        </span>
+      )}
+    </Link>
+
+    {/* Cart */}
+    <button
+      onClick={() => setCartOpen(true)}
+      className="relative"
+      aria-label="Open cart"
+    >
+      <ShoppingCart size={20} />
+      {cartCount > 0 && (
+        <span className="absolute -top-1 -right-2 bg-yellow-400 text-black text-[11px] rounded-full w-[18px] h-[18px] grid place-items-center">
+          {cartCount}
+        </span>
+      )}
+    </button>
+  </div>
+
+  {/* Login / Register (always far right) */}
+  <div className="hidden md:block ml-6">
+    {!user ? (
+      <button
+        onClick={() => setAuthOpen(true)}
+        className="flex items-center gap-1 text-sm font-medium"
+      >
+        <User size={20} />
+        Login / Register
+      </button>
+    ) : (
+      <Link
+        href="/account"
+        className="flex items-center gap-1 text-sm font-medium"
+      >
+        <User size={20} />
+        My Account
+      </Link>
+    )}
+  </div>
+
+                
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ===== MOBILE / TABLET DRAWER ===== */}
-{mobileOpen && (
-  <div className="fixed inset-0 z-50 bg-black/40">
-    <div className="absolute left-0 top-0 h-full w-[85%] bg-white shadow-lg overflow-y-auto">
+        {/* ===== MOBILE DRAWER ===== */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 bg-black/40">
+            <div className="absolute left-0 top-0 h-full w-[85%] bg-white shadow-lg overflow-y-auto">
+              <div className="p-4 border-b">
+                <Search />
+              </div>
 
-      {/* Search */}
-      <div className="p-4 border-b">
-        <Search />
-      </div>
+              <div className="p-4 space-y-2">
+                {!user ? (
+                  <button
+                    onClick={() => {
+                      setAuthOpen(true);
+                      setMobileOpen(false);
+                    }}
+                    className="block py-2 font-medium"
+                  >
+                    Login / Register
+                  </button>
+                ) : (
+                  <Link href="/account" className="block py-2 font-medium">
+                    My Account
+                  </Link>
+                )}
 
-      {/* Tabs */}
-      <div className="flex border-b">
-        <button
-          onClick={() => setMobileTab("menu")}
-          className={`flex-1 py-3 text-sm font-medium ${
-            mobileTab === "menu"
-              ? "border-b-2 border-green-600 text-green-600"
-              : "text-gray-500"
-          }`}
-        >
-          MENU
-        </button>
+                <Link href="/" className="block py-2">Home</Link>
+                <Link href="/shop" className="block py-2">Shop</Link>
+                <Link href="/contact" className="block py-2">Contact</Link>
+                <Link href="/wishlist" className="block py-2">Wishlist</Link>
+              </div>
 
-        <button
-          onClick={() => setMobileTab("categories")}
-          className={`flex-1 py-3 text-sm font-medium ${
-            mobileTab === "categories"
-              ? "border-b-2 border-green-600 text-green-600"
-              : "text-gray-500"
-          }`}
-        >
-          CATEGORIES
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="p-4 space-y-2">
-
-        {mobileTab === "menu" && (
-          <>
-            <Link href="/" onClick={() => setMobileOpen(false)} className="block py-2">Home</Link>
-            <Link href="/shop" onClick={() => setMobileOpen(false)} className="block py-2">Shop</Link>
-            <Link href="/blog" onClick={() => setMobileOpen(false)} className="block py-2">Blog</Link>
-            <Link href="/contact" onClick={() => setMobileOpen(false)} className="block py-2">Contact</Link>
-            <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="block py-2">Wishlist</Link>
-          </>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="absolute top-3 right-3"
+                aria-label="Close menu"
+              >
+                <X />
+              </button>
+            </div>
+          </div>
         )}
-
-        {mobileTab === "categories" && (
-          <>
-            <Link href="/category/furniture" className="block py-2">Furniture</Link>
-            <Link href="/category/cooking" className="block py-2">Cooking</Link>
-            <Link href="/category/accessories" className="block py-2">Accessories</Link>
-            <Link href="/category/fashion" className="block py-2">Fashion</Link>
-            <Link href="/category/clocks" className="block py-2">Clocks</Link>
-          </>
-        )}
-      </div>
-
-      {/* Close */}
-      <button
-        onClick={() => setMobileOpen(false)}
-        className="absolute top-3 right-3"
-      >
-        <X />
-      </button>
-    </div>
-  </div>
-)}
       </header>
 
+      {/* DRAWERS */}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-        <MobileBottomBar />
+      <AuthDrawer open={authOpen} onClose={() => setAuthOpen(false)} />
+      <MobileBottomBar />
     </>
   );
 }
