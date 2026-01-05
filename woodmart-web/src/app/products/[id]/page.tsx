@@ -1,6 +1,9 @@
+// src/app/products/[id]/page.tsx
 import api from "@/lib/api";
-import { notFound } from "next/navigation";
 import AddToCartSection from "@/components/products/AddToCartSection";
+import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 type Product = {
   _id: string;
@@ -13,19 +16,21 @@ type Product = {
   description?: string;
 };
 
-export const dynamic = "force-dynamic";
+type PageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
-export default async function ProductPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const id = params.id;
+export default async function ProductPage({ params }: PageProps) {
+  // ✅ Next 15 FIX: MUST await params
+  const { id } = await params;
 
   let product: Product | null = null;
 
   try {
-    product = await api<Product>(`/products/${id}`);
+    const res = await api<Product>(`/products/${id}`);
+    product = res;
   } catch (err) {
     console.error("Failed to load product", err);
   }
@@ -36,19 +41,23 @@ export default async function ProductPage({
 
   return (
     <div className="container mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10">
-      <img
-        src={product.image || product.images?.[0] || "/placeholder.png"}
-        alt={product.title}
-        className="w-full rounded-lg"
-      />
-
+      {/* Image */}
       <div>
-        <h1 className="text-3xl font-bold">{product.title}</h1>
+        <img
+          src={product.image || product.images?.[0] || "/placeholder.png"}
+          alt={product.title}
+          className="w-full rounded-lg object-cover"
+        />
+      </div>
 
-        <div className="mt-3">
+      {/* Info */}
+      <div>
+        <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
+
+        <div className="mb-4">
           {product.salePrice ? (
             <>
-              <span className="text-red-600 text-2xl font-semibold mr-3">
+              <span className="text-red-600 text-xl font-semibold mr-2">
                 ${product.salePrice}
               </span>
               <span className="line-through text-gray-400">
@@ -56,14 +65,15 @@ export default async function ProductPage({
               </span>
             </>
           ) : (
-            <span className="text-2xl font-semibold">
-              ${product.price}
-            </span>
+            <span className="text-xl font-semibold">${product.price}</span>
           )}
         </div>
 
-        <p className="mt-4 text-gray-600">{product.description}</p>
+        {product.description && (
+          <p className="text-gray-600 mb-6">{product.description}</p>
+        )}
 
+        {/* ADD TO CART + WISHLIST */}
         <AddToCartSection product={product} />
       </div>
     </div>
