@@ -1,4 +1,3 @@
-// src/app/products/[id]/page.tsx
 import api from "@/lib/api";
 import AddToCartSection from "@/components/products/AddToCartSection";
 import { notFound } from "next/navigation";
@@ -23,14 +22,13 @@ type PageProps = {
 };
 
 export default async function ProductPage({ params }: PageProps) {
-  // ✅ Next 15 FIX: MUST await params
+  // ✅ REQUIRED IN NEXT 15
   const { id } = await params;
 
   let product: Product | null = null;
 
   try {
-    const res = await api<Product>(`/products/${id}`);
-    product = res;
+    product = await api<Product>(`/products/${id}`);
   } catch (err) {
     console.error("Failed to load product", err);
   }
@@ -41,7 +39,6 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10">
-      {/* Image */}
       <div>
         <img
           src={product.image || product.images?.[0] || "/placeholder.png"}
@@ -50,7 +47,6 @@ export default async function ProductPage({ params }: PageProps) {
         />
       </div>
 
-      {/* Info */}
       <div>
         <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
 
@@ -73,7 +69,6 @@ export default async function ProductPage({ params }: PageProps) {
           <p className="text-gray-600 mb-6">{product.description}</p>
         )}
 
-        {/* ADD TO CART + WISHLIST */}
         <AddToCartSection product={product} />
       </div>
     </div>
