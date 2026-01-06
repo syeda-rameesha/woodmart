@@ -18,7 +18,7 @@ function qs(obj: Record<string, any>) {
 
 type ProductsResp = {
   items: any[];
-  total?: number;
+  pages?: number;
 };
 
 export default async function ShopPage({
@@ -26,7 +26,7 @@ export default async function ShopPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // ✅ NEXT 15: must await searchParams
+  // ✅ Next.js 15 requirement
   const params = (await searchParams) ?? {};
 
   const q = (params.q ?? "").toString();
@@ -35,35 +35,24 @@ export default async function ShopPage({
   const sort = (params.sort ?? "createdAt-desc").toString();
 
   let items: any[] = [];
+  let pages = 1;
 
+  // 🔍 SEARCH (not paginated)
   if (q.trim()) {
     const data = await api<ProductsResp>(
       `/products/search?q=${encodeURIComponent(q)}&limit=48`
     );
     items = data.items ?? [];
-  } else {
-    const data = await api<ProductsResp>(`/products`);
-    items = data.items ?? [];
+    pages = 1;
   }
-
-  // sort
-  const sorted = [...items].sort((a, b) => {
-    const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
-
-    switch (sort) {
-      case "createdAt-asc":
-        return ta - tb;
-      case "createdAt-desc":
-      default:
-        return tb - ta;
-    }
-  });
-
-  // pagination
-  const start = (page - 1) * limit;
-  const pageItems = sorted.slice(start, start + limit);
-  const pages = Math.max(1, Math.ceil(sorted.length / limit));
+  // 📦 NORMAL LIST (paginated)
+  else {
+    const data = await api<ProductsResp>(
+      `/products?page=${page}&limit=${limit}&sort=${sort}`
+    );
+    items = data.items ?? [];
+    pages = data.pages ?? 1;
+  }
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -90,11 +79,17 @@ export default async function ShopPage({
       </div>
 
       {/* Products */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {pageItems.map((p) => (
-          <ProductCard key={p._id} {...p} />
-        ))}
-      </div>
+      {items.length === 0 ? (
+        <div className="text-center text-gray-500 py-20">
+          No products found.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {items.map((p) => (
+            <ProductCard key={p._id} {...p} />
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="flex items-center justify-center gap-4 mt-8">
@@ -102,6 +97,18 @@ export default async function ShopPage({
           Page <b>{page}</b> of <b>{pages}</b>
         </span>
 
+        {/* Previous */}
+        <Link
+          href={`/shop${qs({ q, page: page - 1, limit, sort })}`}
+          className={`px-3 py-2 border rounded ${
+            page <= 1 ? "pointer-events-none opacity-50" : ""
+          }`}
+          aria-disabled={page <= 1}
+        >
+          Previous
+        </Link>
+
+        {/* Next */}
         <Link
           href={`/shop${qs({ q, page: page + 1, limit, sort })}`}
           className={`px-3 py-2 border rounded ${
