@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { adminApi } from "@/lib/adminApi"; // named import (matches your adminApi)
 import toast from "react-hot-toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 // money formatter
 const money = (n?: number) =>
@@ -45,6 +46,8 @@ export default function OrdersTable() {
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
   useEffect(() => {
     loadOrders();
   }, []);
@@ -155,6 +158,15 @@ export default function OrdersTable() {
                   disabled={savingId === order._id}
                   className="w-full border rounded px-2 py-1"
                 >
+                  <button
+                  className="mt-2 w-full text-sm text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50"
+                  onClick={() => {
+                  setTargetOrderId(order._id);
+                  setConfirmOpen(true);
+                   }}
+                    >
+                   Cancel Order
+                    </button>
                   <option value="pending">pending</option>
                   <option value="processing">processing</option>
                   <option value="shipped">shipped</option>
@@ -168,6 +180,23 @@ export default function OrdersTable() {
       })}
 
       {orders.length === 0 && <div className="text-gray-600">No orders found.</div>}
+      <ConfirmModal
+       open={confirmOpen}
+       title="Cancel Order"
+       message="Are you sure you want to cancel this order?"
+       onCancel={() => {
+       setConfirmOpen(false);
+       setTargetOrderId(null);
+       }}
+       onConfirm={async () => {
+       if (!targetOrderId) return;
+
+       await updateStatus(targetOrderId, "cancelled");
+
+       setConfirmOpen(false);
+       setTargetOrderId(null);
+       }}
+       />
     </div>
   );
 }

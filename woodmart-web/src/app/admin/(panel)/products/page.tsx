@@ -26,7 +26,8 @@ export default function AdminProductsPage() {
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   async function load() {
     try {
       setLoading(true);
@@ -47,15 +48,24 @@ export default function AdminProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this product?")) return;
-    try {
-      await adminApi(`/admin/products/${id}`, token, { method: "DELETE" });
-      setItems((prev) => prev.filter((p) => p._id !== id));
-    } catch (err: any) {
-      alert(err?.message || "Delete failed");
-    }
+ function handleDelete(id: string) {
+  setDeleteId(id); // open modal
+}
+
+async function confirmDelete() {
+  if (!deleteId) return;
+
+  setDeleting(true);
+  try {
+    await adminApi(`/admin/products/${deleteId}`, token, { method: "DELETE" });
+    setItems((prev) => prev.filter((p) => p._id !== deleteId));
+    setDeleteId(null);
+  } catch (err: any) {
+    alert(err?.message || "Delete failed");
+  } finally {
+    setDeleting(false);
   }
+}
 
   return (
     <AdminGuard>
@@ -119,6 +129,34 @@ export default function AdminProductsPage() {
             </table>
           </div>
         )}
+        {deleteId && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-lg w-full max-w-sm p-5 shadow-lg">
+      <h3 className="text-lg font-semibold mb-2">Delete product</h3>
+      <p className="text-sm text-gray-600 mb-5">
+        Are you sure you want to delete this product?
+      </p>
+
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setDeleteId(null)}
+          disabled={deleting}
+          className="px-4 py-2 text-sm border rounded"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={confirmDelete}
+          disabled={deleting}
+          className="px-4 py-2 text-sm bg-red-600 text-white rounded"
+        >
+          {deleting ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </div>
     </AdminGuard>
   );

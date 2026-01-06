@@ -1,20 +1,24 @@
 "use client";
 
-type Props = {
+type ConfirmModalProps = {
   open: boolean;
-  title: string;
+  title?: string;
   message: string;
+  confirmText?: string;
+  cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
 export default function ConfirmModal({
   open,
-  title,
+  title = "Confirm",
   message,
+  confirmText = "Delete",
+  cancelText = "Cancel",
   onConfirm,
   onCancel,
-}: Props) {
+}: ConfirmModalProps) {
   if (!open) return null;
 
   return (
@@ -26,16 +30,16 @@ export default function ConfirmModal({
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
+            className="px-4 py-2 text-sm border rounded hover:bg-gray-100"
           >
-            Cancel
+            {cancelText}
           </button>
 
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+            className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
           >
-            Confirm
+            {confirmText}
           </button>
         </div>
       </div>
