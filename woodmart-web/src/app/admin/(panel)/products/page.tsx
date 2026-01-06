@@ -6,6 +6,7 @@ import Link from "next/link";
 import AdminGuard from "@/components/admin/AdminGuard";
 import { useAdmin } from "@/store/useAdmin";
 import { adminApi } from "@/lib/adminApi";
+import Loader from "@/components/ui/Loader";
 
 type Product = {
   _id: string;
@@ -87,7 +88,9 @@ async function confirmDelete() {
         )}
 
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <div className="flex items-center justify-center h-[60vh]">
+          <Loader size={32} />
+          </div>
         ) : items.length === 0 ? (
           <p className="text-sm text-gray-500">No products.</p>
         ) : (

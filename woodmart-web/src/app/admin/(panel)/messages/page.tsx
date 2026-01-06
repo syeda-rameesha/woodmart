@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { adminApi } from "@/lib/adminApi";
+import Loader from "@/components/ui/Loader";
 
 type Message = {
   _id: string;
@@ -78,7 +79,11 @@ export default function AdminMessagesPage() {
         </div>
       </div>
 
-      {loading && <div className="text-sm text-gray-600">Loading messages…</div>}
+      {loading && (
+       <div className="flex items-center justify-center h-[60vh]">
+       <Loader size={32} />
+       </div>
+        )}
 
       {!loading && messages.length === 0 && (
         <div className="text-gray-600">No messages found.</div>

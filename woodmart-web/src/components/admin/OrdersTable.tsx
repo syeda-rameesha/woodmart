@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { adminApi } from "@/lib/adminApi"; // named import (matches your adminApi)
 import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import Loader from "@/components/ui/Loader";
 
 // money formatter
 const money = (n?: number) =>
@@ -122,7 +123,12 @@ export default function OrdersTable() {
     }
   }
 
-  if (loading) return <div className="text-sm text-gray-600">Loading orders…</div>;
+  if (loading)
+  return (
+    <div className="flex items-center justify-center h-[60vh]">
+      <Loader size={32} />
+    </div>
+  );
 
   return (
     <div className="space-y-4">
