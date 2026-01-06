@@ -44,13 +44,13 @@ export default function AdminSidebar() {
       </div>
 
       <div className={`${open ? "block" : "hidden"} md:block`}>
-        <div className="px-4 py-6">
+        <div className="px-2 py-12">
           <div className="mb-6">
             <div className="text-lg font-bold">WoodMart Admin</div>
             <div className="text-sm text-gray-500">Manage store</div>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}

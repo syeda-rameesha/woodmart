@@ -10,6 +10,7 @@ import Search from "@/components/ui/Search";
 import MobileBottomBar from "@/components/layout/MobileBottomBar";
 import { useUser } from "@/store/useUser";
 import AuthDrawer from "@/components/auth/AuthDrawer";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const cart = useCart((s) => s.cart);
@@ -24,6 +25,10 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
+  const pathname = usePathname();
+  const isAdminRoute = pathname.startsWith("/admin");
+
+  if (isAdminRoute) return null;
   return (
     <>
       <header className="sticky top-0 z-50 bg-white shadow">
