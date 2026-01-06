@@ -34,8 +34,7 @@ export default function CategoryChips({
 
   const wrapClass =
     variant === "hero"
-      ? // centered, no scrollbar, allow wrapping into 2 rows
-        "flex flex-wrap items-center justify-center gap-3"
+      ? "flex flex-wrap items-center justify-center gap-3"
       : "flex flex-wrap items-center gap-3";
 
   const chipBase =
@@ -63,7 +62,9 @@ export default function CategoryChips({
             aria-pressed={isActive}
             title={c.label}
           >
-            <CatIcon name={c.key} className="h-5 w-5" />
+            {/* ✅ FIX: type-safe cast to satisfy CatIcon props */}
+            <CatIcon {...({ name: c.key, className: "h-5 w-5" } as any)} />
+
             <span className="text-sm">{c.label}</span>
             <span className="text-xs text-gray-500">
               {n} {n === 1 ? "product" : "products"}
