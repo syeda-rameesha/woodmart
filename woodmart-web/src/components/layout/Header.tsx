@@ -185,7 +185,7 @@ export default function Header() {
 
               <button
                 onClick={() => setMobileOpen(false)}
-                className="absolute top-3 right-3"
+                className="absolute top-5 right-5"
                 aria-label="Close menu"
               >
                 <X />
