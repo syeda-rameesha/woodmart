@@ -16,7 +16,7 @@ export type Slide = {
 type Props = {
   slides: Slide[];
   intervalMs?: number;
-  children?: React.ReactNode; // chips row overlay
+  children?: React.ReactNode;
 };
 
 export default function HeroSlider({
@@ -25,15 +25,14 @@ export default function HeroSlider({
   children,
 }: Props) {
   const [idx, setIdx] = useState(0);
-  // ✅ Fix: use browser-safe timer type
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const hovering = useRef(false);
 
-  const go = (n: number) => setIdx((p) => (p + n + slides.length) % slides.length);
+  const go = (n: number) =>
+    setIdx((p) => (p + n + slides.length) % slides.length);
   const next = () => go(1);
   const prev = () => go(-1);
 
-  // autoplay (paused on hover)
   useEffect(() => {
     if (hovering.current) return;
     if (timer.current) clearInterval(timer.current);
@@ -55,20 +54,23 @@ export default function HeroSlider({
     >
       {/* image */}
       <div className="aspect-[16/6] sm:aspect-[16/6] md:aspect-[16/6] lg:aspect-[16/5] xl:aspect-[16/5] bg-gray-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={s.image} alt={s.title || "slide"} className="h-full w-full object-cover" />
+        <img
+          src={s.image}
+          alt={s.title || "slide"}
+          className="h-full w-full object-cover"
+        />
       </div>
 
-      {/* arrows */}
+      {/* arrows (already correct) */}
       <button
-        className="absolute left-3 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full bg-white/90 hover:bg-white shadow"
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 hover:bg-white shadow"
         onClick={prev}
         aria-label="Previous slide"
       >
         ‹
       </button>
       <button
-        className="absolute right-3 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full bg-white/90 hover:bg-white shadow"
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 hover:bg-white shadow"
         onClick={next}
         aria-label="Next slide"
       >
@@ -78,7 +80,7 @@ export default function HeroSlider({
       {/* headline / copy */}
       <div
         className={[
-          "absolute inset-x-0 top-1/2 -translate-y-1/2 px-6",
+          "pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 px-6",
           s.align === "left"
             ? "text-left"
             : s.align === "right"
@@ -86,13 +88,17 @@ export default function HeroSlider({
             : "text-center",
         ].join(" ")}
       >
-        <div className="mx-auto max-w-5xl">
+        <div className="pointer-events-auto mx-auto max-w-5xl">
           {s.title && (
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow">
               {s.title}
             </h2>
           )}
-          {s.subtitle && <p className="mt-2 text-white/90 drop-shadow">{s.subtitle}</p>}
+          {s.subtitle && (
+            <p className="mt-2 text-white/90 drop-shadow">
+              {s.subtitle}
+            </p>
+          )}
           {s.href && s.ctaLabel && (
             <Link
               href={s.href}
