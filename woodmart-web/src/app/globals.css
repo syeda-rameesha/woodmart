@@ -4,3 +4,11 @@
 
 /* Put any custom CSS below. Do NOT place utilities or @apply at the top level */
 html, body { height: 100%; }
+/* hide scrollbar but allow scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

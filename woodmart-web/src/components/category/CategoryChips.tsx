@@ -33,9 +33,16 @@ export default function CategoryChips({
   const pathname = usePathname();
 
   const wrapClass =
-    variant === "hero"
-      ? "flex flex-wrap items-center justify-center gap-3"
-      : "flex flex-wrap items-center gap-3";
+  variant === "hero"
+    ? `
+        flex gap-3
+        overflow-x-auto
+        scrollbar-hide
+        px-2
+        sm:justify-center
+        sm:flex-wrap
+      `
+    : "flex flex-wrap items-center gap-3";
 
   const chipBase =
     "transition rounded-full border flex items-center gap-2 whitespace-nowrap";

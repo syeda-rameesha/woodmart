@@ -1,44 +1,18 @@
 "use client";
 
 type Props = {
-  open: boolean;
-  title: string;
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
+  name: string;
+  className?: string;
 };
 
-export default function ConfirmModal({
-  open,
-  title,
-  message,
-  onConfirm,
-  onCancel,
-}: Props) {
-  if (!open) return null;
-
+export default function CatIcon({ name, className = "" }: Props) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-        <h2 className="text-lg font-semibold mb-2">{title}</h2>
-        <p className="text-sm text-gray-600 mb-6">{message}</p>
-
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
+    <span
+      className={`inline-flex items-center justify-center ${className}`}
+      aria-hidden
+      title={name}
+    >
+      ●
+    </span>
   );
 }

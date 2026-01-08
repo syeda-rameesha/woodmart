@@ -117,8 +117,9 @@ export default function CategoryPage() {
           <h1 className="text-4xl font-bold">{meta?.title}</h1>
         </div>
       </div>
-
+      <div className="mt-12 md:mt-2">
       <CategoryChips active={catKey} counts={counts} />
+       </div>
 
       <div className="container mx-auto px-4 mt-6">
         {loading && <p>Loading…</p>}
