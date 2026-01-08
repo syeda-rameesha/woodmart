@@ -32,18 +32,16 @@ export default function CategoryChips({
   const router = useRouter();
   const pathname = usePathname();
 
-  const wrapClass =
+ const wrapClass =
   variant === "hero"
-    ? `
+    ? "flex flex-wrap items-center justify-center gap-3"
+    : `
         flex gap-3
         overflow-x-auto
-        scrollbar-hide
-        px-2
-        sm:justify-center
-        sm:flex-wrap
-      `
-    : "flex flex-wrap items-center gap-3";
-
+        md:flex-wrap
+        md:justify-center
+        pb-2
+      `;
   const chipBase =
     "transition rounded-full border flex items-center gap-2 whitespace-nowrap";
 
@@ -52,7 +50,7 @@ export default function CategoryChips({
   const chipDefault = "bg-white hover:bg-gray-50 px-3 py-1.5";
 
   return (
-    <div className={wrapClass}>
+  <div className={`${wrapClass} max-w-6xl mx-auto`}>
       {ALL_CATS.map((c) => {
         const isActive = active === c.key || pathname.endsWith(`/${c.key}`);
         const n = counts[c.key] ?? 0;

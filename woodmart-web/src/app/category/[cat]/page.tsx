@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import CategoryChips from "@/components/category/CategoryChips";
 import { ALL_CATS } from "@/lib/categories";
+import MobileCategoryDropdown from "@/components/category/MobileCategoryDropdown";
 
 type Item = {
   _id: string;
@@ -118,7 +119,9 @@ export default function CategoryPage() {
         </div>
       </div>
       <div className="mt-12 md:mt-2">
+      <div className="mt-6 mb-8">
       <CategoryChips active={catKey} counts={counts} />
+      </div>
        </div>
 
       <div className="container mx-auto px-4 mt-6">
