@@ -54,7 +54,7 @@ const CATEGORY_META: Record<
   },
   toys: {
     title: "Toys",
-    hero: "https://images.unsplash.com/photo-1601758124499-1a5698617934?q=80&w=1600&auto=format&fit=crop",
+    hero: "https://files.catbox.moe/gxxz5e.jpeg",
   },
 };
 
